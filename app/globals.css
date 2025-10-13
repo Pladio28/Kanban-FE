@@ -4,8 +4,9 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 224 71.4% 4.1%;
+    /* === Warna Utama (Light Mode) === */
+    --background: 0 0% 100%; /* Putih */
+    --foreground: 222.2 47.4% 11.2%; /* Teks utama */
 
     --card: 0 0% 100%;
     --card-foreground: 224 71.4% 4.1%;
@@ -13,11 +14,12 @@
     --popover: 0 0% 100%;
     --popover-foreground: 224 71.4% 4.1%;
 
-    --primary: 220.9 39.3% 11%;
-    --primary-foreground: 210 20% 98%;
+    /* Warna tema yang kamu inginkan */
+    --primary: 188 100% 21%; /* #005D69 */
+    --primary-foreground: 0 0% 100%; /* Putih */
 
-    --secondary: 220 14.3% 95.9%;
-    --secondary-foreground: 220.9 39.3% 11%;
+    --secondary: 220 31% 15%; /* #182233 */
+    --secondary-foreground: 0 0% 100%; /* Putih */
 
     --muted: 220 14.3% 95.9%;
     --muted-foreground: 220 8.9% 46.1%;
@@ -30,26 +32,27 @@
 
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 224 71.4% 4.1%;
+    --ring: 188 100% 21%; /* disamakan dengan primary */
 
     --radius: 0.5rem;
   }
 
+  /* === Warna Mode Gelap === */
   .dark {
-    --background: 224 71.4% 4.1%;
-    --foreground: 210 20% 98%;
+    --background: 220 31% 15%; /* #182233 */
+    --foreground: 210 20% 98%; /* teks terang */
 
-    --card: 224 71.4% 4.1%;
+    --card: 220 31% 15%;
     --card-foreground: 210 20% 98%;
 
-    --popover: 224 71.4% 4.1%;
+    --popover: 220 31% 15%;
     --popover-foreground: 210 20% 98%;
 
-    --primary: 210 20% 98%;
-    --primary-foreground: 220.9 39.3% 11%;
+    --primary: 188 100% 26%; /* sedikit lebih terang dari #005D69 */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 215 27.9% 16.9%;
-    --secondary-foreground: 210 20% 98%;
+    --secondary: 188 100% 21%; /* biru kehijauan */
+    --secondary-foreground: 0 0% 100%;
 
     --muted: 215 27.9% 16.9%;
     --muted-foreground: 217.9 10.6% 64.9%;
@@ -62,7 +65,7 @@
 
     --border: 215 27.9% 16.9%;
     --input: 215 27.9% 16.9%;
-    --ring: 216 12.2% 83.9%;
+    --ring: 188 100% 26%;
   }
 }
 

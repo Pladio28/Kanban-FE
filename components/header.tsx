@@ -12,17 +12,13 @@ export default function Header() {
           <li>
             <Link href='/'>Home</Link>
           </li>
+          <SignedIn>
           <li>
-            <Link href='/protected/Kanban'>Kanban</Link>
+            <Link href='/protected/Project'>Project</Link>
           </li>
+          </SignedIn>
           <li>
-            <Link href='/protected/Team'>Team</Link>
-          </li>
-          <li>
-            <Link href='/about'>About?</Link>
-          </li>
-          <li>
-            <Link href='/api/me'>Who am I?</Link>
+            <Link href='/about'>About</Link>
           </li>
         </ul>
 
