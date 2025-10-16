@@ -1,221 +1,152 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import Link from "next/link";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardFooter,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Trash2, Pencil } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 
-type Task = { id: number; text: string; done: boolean };
-type Column = { title: string; tasks: Task[] };
+// 🧩 Definisikan tipe project
+interface Project {
+  id: string;
+  name: string;
+  desc: string;
+}
 
-export default function KanbanPage() {
-  // State boards
-  const [columns, setColumns] = useState<Record<string, Column>>({
-    todo: {
-      title: "To Do",
-      tasks: [{ id: 1, text: "Belajar Next.js", done: false }],
-    },
-    progress: {
-      title: "In Progress",
-      tasks: [{ id: 2, text: "Bikin UI Kanban", done: false }],
-    },
-    done: {
-      title: "Done",
-      tasks: [{ id: 3, text: "Setup Project", done: true }],
-    },
-  });
+export default function ProjectListPage() {
+  const [projects, setProjects] = useState<Project[]>([
+    { id: "1", name: "Website Perusahaan", desc: "Membuat website profil perusahaan." },
+    { id: "2", name: "Aplikasi Kanban Tim", desc: "Manajemen tugas dengan sistem Kanban." },
+  ]);
 
-  const [newTask, setNewTask] = useState<Record<string, string>>({});
-  const [editingTitle, setEditingTitle] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [form, setForm] = useState({ name: "", desc: "" });
 
-  // ➕ Tambah Task
-  const addTask = (colKey: string) => {
-    if (!newTask[colKey]?.trim()) return;
-
-    const newItem: Task = {
-      id: Date.now(),
-      text: newTask[colKey],
-      done: false,
+  const handleAdd = () => {
+    const newProject: Project = {
+      id: Date.now().toString(),
+      name: form.name,
+      desc: form.desc,
     };
-
-    setColumns({
-      ...columns,
-      [colKey]: {
-        ...columns[colKey],
-        tasks: [...columns[colKey].tasks, newItem],
-      },
-    });
-
-    setNewTask({ ...newTask, [colKey]: "" });
+    setProjects([...projects, newProject]);
+    setForm({ name: "", desc: "" });
+    setOpen(false);
   };
 
-  // ✅ Toggle Task
-  const toggleTask = (colKey: string, id: number) => {
-    setColumns({
-      ...columns,
-      [colKey]: {
-        ...columns[colKey],
-        tasks: columns[colKey].tasks.map((task) =>
-          task.id === id ? { ...task, done: !task.done } : task
-        ),
-      },
-    });
+  const handleEdit = (id: string) => {
+    const updated = projects.map((p) =>
+      p.id === id ? { ...p, name: form.name, desc: form.desc } : p
+    );
+    setProjects(updated);
+    setForm({ name: "", desc: "" });
+    setEditingProject(null);
+    setOpen(false);
   };
 
-  // 🗑️ Hapus Task
-  const deleteTask = (colKey: string, id: number) => {
-    setColumns({
-      ...columns,
-      [colKey]: {
-        ...columns[colKey],
-        tasks: columns[colKey].tasks.filter((task) => task.id !== id),
-      },
-    });
-  };
-
-  // ➕ Tambah Board
-  const addBoard = () => {
-    const newKey = `board-${Date.now()}`;
-    setColumns({
-      ...columns,
-      [newKey]: { title: "New Board", tasks: [] },
-    });
-  };
-
-  // 📝 Update Judul Board
-  const updateBoardTitle = (colKey: string, newTitle: string) => {
-    setColumns({
-      ...columns,
-      [colKey]: {
-        ...columns[colKey],
-        title: newTitle,
-      },
-    });
-  };
-
-  // 🗑️ Hapus Board
-  const deleteBoard = (colKey: string) => {
-    const updated = { ...columns };
-    delete updated[colKey];
-    setColumns(updated);
+  const handleDelete = (id: string) => {
+    setProjects(projects.filter((p) => p.id !== id));
   };
 
   return (
-    <div className="p-6">
-      {/* Header */}
-      <header className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">🚀 My Kanban Board</h1>
-        <Button variant="outline" onClick={addBoard}>
-          + New Board
-        </Button>
-      </header>
-
-      {/* Kanban Board */}
-      <div className="grid grid-cols-3 gap-4">
-        {Object.entries(columns).map(([colKey, colData]) => (
-          <Card key={colKey} className="p-4 bg-gray-50">
-            <div className="flex items-center justify-between mb-3">
-              {editingTitle === colKey ? (
+    <main className="min-h-screen bg-background text-foreground p-8">
+      <div className="max-w-5xl mx-auto">
+        {/* 🔹 Header + tombol tambah */}
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-bold text-primary">Daftar Project</h1>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={() => setEditingProject(null)}>+ New Project</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>
+                  {editingProject ? "Edit Project" : "Tambah Project Baru"}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
                 <Input
-                  value={colData.title}
-                  onChange={(e) => updateBoardTitle(colKey, e.target.value)}
-                  onBlur={() => setEditingTitle(null)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") setEditingTitle(null);
-                  }}
-                  autoFocus
-                  className="text-lg font-semibold border border-gray-400 bg-white px-2 py-1"
+                  placeholder="Nama Project"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
                 />
-              ) : (
-                <h2
-                  className={`text-lg font-semibold ${
-                    colKey === "todo"
-                      ? "text-blue-600"
-                      : colKey === "progress"
-                      ? "text-yellow-600"
-                      : colKey === "done"
-                      ? "text-green-600"
-                      : "text-black"
-                  }`}
-                >
-                  {colData.title}
-                </h2>
-              )}
-
-              <div className="flex gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() =>
-                    setEditingTitle(editingTitle === colKey ? null : colKey)
-                  }
-                >
-                  <Pencil className="w-4 h-4 text-gray-500" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => deleteBoard(colKey)}
-                >
-                  <Trash2 className="w-4 h-4 text-red-500" />
-                </Button>
+                <Textarea
+                  placeholder="Deskripsi Project"
+                  value={form.desc}
+                  onChange={(e) => setForm({ ...form, desc: e.target.value })}
+                />
               </div>
-            </div>
-
-            <CardContent className="space-y-2">
-              {colData.tasks.map((task) => (
-                <div
-                  key={task.id}
-                  className="flex items-center justify-between bg-white p-2 rounded shadow"
+              <DialogFooter>
+                <Button
+                  onClick={
+                    editingProject
+                      ? () => handleEdit(editingProject.id)
+                      : handleAdd
+                  }
+                  className="w-full"
                 >
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      checked={task.done}
-                      onCheckedChange={() => toggleTask(colKey, task.id)}
-                    />
-                    <span
-                      className={`transition-all ${
-                        task.done
-                          ? "line-through text-gray-400 italic"
-                          : "text-gray-800 font-medium"
-                      }`}
-                    >
-                      {task.text}
-                    </span>
-                  </div>
+                  {editingProject ? "Simpan Perubahan" : "Tambah"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        {/* GRID LIST PROJECT */}
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {projects.map((project) => (
+            <Card
+              key={project.id}
+              className="border border-border hover:border-primary/40 transition duration-300 hover:-translate-y-2"
+            >
+              <CardHeader>
+                <CardTitle>{project.name}</CardTitle>
+                <CardDescription>{project.desc}</CardDescription>
+              </CardHeader>
+              <CardFooter className="flex justify-between">
+                <Link href={`/protected/Project/${project.id}`}>
+                  <Button variant="secondary">Lihat</Button>
+                </Link>
+                <div className="flex gap-2">
                   <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => deleteTask(colKey, task.id)}
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setEditingProject(project);
+                      setForm({ name: project.name, desc: project.desc });
+                      setOpen(true);
+                    }}
                   >
-                    <Trash2 className="w-4 h-4 text-red-500" />
+                    Edit
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => handleDelete(project.id)}
+                  >
+                    Hapus
                   </Button>
                 </div>
-              ))}
-            </CardContent>
-
-            {/* Add Task */}
-            <div className="flex gap-2 mt-3">
-              <Input
-                placeholder={`Add to ${colData.title}`}
-                value={newTask[colKey] || ""}
-                onChange={(e) =>
-                  setNewTask({
-                    ...newTask,
-                    [colKey]: e.target.value,
-                  })
-                }
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") addTask(colKey);
-                }}
-              />
-              <Button onClick={() => addTask(colKey)}>+</Button>
-            </div>
-          </Card>
-        ))}
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
       </div>
-    </div>
+    </main>
   );
 }
