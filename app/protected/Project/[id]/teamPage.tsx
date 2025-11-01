@@ -75,7 +75,7 @@ export default function TeamPage() {
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-primary">Anggota Tim</h1>
+          <h1 className="text-3xl font-bold text-white">Anggota Tim</h1>
 
           {/* Dialog Tambah/Edit */}
           <Dialog open={open} onOpenChange={setOpen}>

@@ -6,9 +6,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Trash2, Pencil } from "lucide-react";
+import { Trash2, Pencil, Check } from "lucide-react";
 
-type Task = { id: number; text: string; done: boolean };
+type Task = { id: number; text: string; done: boolean; description?: string };
 type Column = { title: string; tasks: Task[] };
 
 export default function KanbanPage() {
@@ -30,16 +30,22 @@ export default function KanbanPage() {
   const [newTask, setNewTask] = useState<Record<string, string>>({});
   const [editingTitle, setEditingTitle] = useState<string | null>(null);
 
-  // ➕ Tambah Task
+  // State popup deskripsi
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [selectedColKey, setSelectedColKey] = useState<string | null>(null);
+  const [tempDescription, setTempDescription] = useState<string>("");
+
+  // State edit task name
+  const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
+  const [tempTaskText, setTempTaskText] = useState<string>("");
+
   const addTask = (colKey: string) => {
     if (!newTask[colKey]?.trim()) return;
-
     const newItem: Task = {
       id: Date.now(),
       text: newTask[colKey],
       done: false,
     };
-
     setColumns({
       ...columns,
       [colKey]: {
@@ -47,11 +53,9 @@ export default function KanbanPage() {
         tasks: [...columns[colKey].tasks, newItem],
       },
     });
-
     setNewTask({ ...newTask, [colKey]: "" });
   };
 
-  // ✅ Toggle Task
   const toggleTask = (colKey: string, id: number) => {
     setColumns({
       ...columns,
@@ -64,7 +68,6 @@ export default function KanbanPage() {
     });
   };
 
-  // 🗑️ Hapus Task
   const deleteTask = (colKey: string, id: number) => {
     setColumns({
       ...columns,
@@ -75,7 +78,30 @@ export default function KanbanPage() {
     });
   };
 
-  // ➕ Tambah Board
+  const updateTaskDescription = (colKey: string, id: number, newDesc: string) => {
+    setColumns((prev) => ({
+      ...prev,
+      [colKey]: {
+        ...prev[colKey],
+        tasks: prev[colKey].tasks.map((task) =>
+          task.id === id ? { ...task, description: newDesc } : task
+        ),
+      },
+    }));
+  };
+
+  const updateTaskText = (colKey: string, id: number, newText: string) => {
+    setColumns((prev) => ({
+      ...prev,
+      [colKey]: {
+        ...prev[colKey],
+        tasks: prev[colKey].tasks.map((task) =>
+          task.id === id ? { ...task, text: newText } : task
+        ),
+      },
+    }));
+  };
+
   const addBoard = () => {
     const newKey = `board-${Date.now()}`;
     setColumns({
@@ -84,47 +110,35 @@ export default function KanbanPage() {
     });
   };
 
-  // 📝 Update Judul Board
   const updateBoardTitle = (colKey: string, newTitle: string) => {
     setColumns({
       ...columns,
-      [colKey]: {
-        ...columns[colKey],
-        title: newTitle,
-      },
+      [colKey]: { ...columns[colKey], title: newTitle },
     });
   };
 
-  // 🗑️ Hapus Board
   const deleteBoard = (colKey: string) => {
     const updated = { ...columns };
     delete updated[colKey];
     setColumns(updated);
   };
 
-  // 🧩 Fungsi Drag & Drop
   const onDragEnd = (result: any) => {
     const { source, destination } = result;
     if (!destination) return;
 
     const sourceCol = columns[source.droppableId];
     const destCol = columns[destination.droppableId];
-
     const sourceTasks = [...sourceCol.tasks];
     const [movedTask] = sourceTasks.splice(source.index, 1);
 
     if (source.droppableId === destination.droppableId) {
-      // Pindah di kolom yang sama
       sourceTasks.splice(destination.index, 0, movedTask);
       setColumns({
         ...columns,
-        [source.droppableId]: {
-          ...sourceCol,
-          tasks: sourceTasks,
-        },
+        [source.droppableId]: { ...sourceCol, tasks: sourceTasks },
       });
     } else {
-      // Pindah ke kolom lain
       const destTasks = [...destCol.tasks];
       destTasks.splice(destination.index, 0, movedTask);
       setColumns({
@@ -137,7 +151,6 @@ export default function KanbanPage() {
 
   return (
     <div className="p-6">
-      {/* Header */}
       <header className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">🚀 My Kanban Board</h1>
         <Button variant="outline" onClick={addBoard}>
@@ -145,7 +158,6 @@ export default function KanbanPage() {
         </Button>
       </header>
 
-      {/* DragDropContext */}
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="grid grid-cols-3 gap-4">
           {Object.entries(columns).map(([colKey, colData]) => (
@@ -156,6 +168,7 @@ export default function KanbanPage() {
                   {...provided.droppableProps}
                   className="p-4 bg-gray-50"
                 >
+                  {/* Judul board */}
                   <div className="flex items-center justify-between mb-3">
                     {editingTitle === colKey ? (
                       <Input
@@ -166,7 +179,6 @@ export default function KanbanPage() {
                           if (e.key === "Enter") setEditingTitle(null);
                         }}
                         autoFocus
-                        className="text-lg font-semibold border border-gray-400 bg-white px-2 py-1"
                       />
                     ) : (
                       <h2
@@ -183,7 +195,6 @@ export default function KanbanPage() {
                         {colData.title}
                       </h2>
                     )}
-
                     <div className="flex gap-2">
                       <Button
                         variant="ghost"
@@ -204,7 +215,7 @@ export default function KanbanPage() {
                     </div>
                   </div>
 
-                  {/* Daftar Task */}
+                  {/* Daftar task */}
                   <CardContent className="space-y-2">
                     {colData.tasks.map((task, index) => (
                       <Draggable
@@ -219,30 +230,76 @@ export default function KanbanPage() {
                             {...provided.dragHandleProps}
                             className="flex items-center justify-between bg-white p-2 rounded shadow"
                           >
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-1">
                               <Checkbox
                                 checked={task.done}
                                 onCheckedChange={() =>
                                   toggleTask(colKey, task.id)
                                 }
                               />
-                              <span
-                                className={`transition-all ${
-                                  task.done
-                                    ? "line-through text-gray-400 italic"
-                                    : "text-gray-800 font-medium"
-                                }`}
-                              >
-                                {task.text}
-                              </span>
+                              {editingTaskId === task.id ? (
+                                <Input
+                                  value={tempTaskText}
+                                  onChange={(e) =>
+                                    setTempTaskText(e.target.value)
+                                  }
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                      updateTaskText(
+                                        colKey,
+                                        task.id,
+                                        tempTaskText
+                                      );
+                                      setEditingTaskId(null);
+                                    }
+                                  }}
+                                  onBlur={() => {
+                                    updateTaskText(
+                                      colKey,
+                                      task.id,
+                                      tempTaskText
+                                    );
+                                    setEditingTaskId(null);
+                                  }}
+                                  autoFocus
+                                />
+                              ) : (
+                                <span
+                                  onClick={() => {
+                                    setSelectedTask(task);
+                                    setSelectedColKey(colKey);
+                                    setTempDescription(task.description || "");
+                                  }}
+                                  className={`cursor-pointer transition-all ${
+                                    task.done
+                                      ? "line-through text-gray-400 italic"
+                                      : "text-gray-800 font-medium hover:underline"
+                                  }`}
+                                >
+                                  {task.text}
+                                </span>
+                              )}
                             </div>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => deleteTask(colKey, task.id)}
-                            >
-                              <Trash2 className="w-4 h-4 text-red-500" />
-                            </Button>
+
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setEditingTaskId(task.id);
+                                  setTempTaskText(task.text);
+                                }}
+                              >
+                                <Pencil className="w-4 h-4 text-blue-500" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => deleteTask(colKey, task.id)}
+                              >
+                                <Trash2 className="w-4 h-4 text-red-500" />
+                              </Button>
+                            </div>
                           </div>
                         )}
                       </Draggable>
@@ -273,6 +330,47 @@ export default function KanbanPage() {
           ))}
         </div>
       </DragDropContext>
+
+      {/* Popup deskripsi */}
+      {selectedTask && selectedColKey && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+          <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md">
+            <h2 className="text-xl font-semibold mb-3">{selectedTask.text}</h2>
+            <textarea
+              className="w-full h-32 p-2 border rounded mb-4"
+              placeholder="Tulis deskripsi di sini..."
+              value={tempDescription}
+              onChange={(e) => setTempDescription(e.target.value)}
+            />
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSelectedTask(null);
+                  setSelectedColKey(null);
+                  setTempDescription("");
+                }}
+              >
+                Batal
+              </Button>
+              <Button
+                onClick={() => {
+                  updateTaskDescription(
+                    selectedColKey,
+                    selectedTask.id,
+                    tempDescription
+                  );
+                  setSelectedTask(null);
+                  setSelectedColKey(null);
+                  setTempDescription("");
+                }}
+              >
+                Simpan
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

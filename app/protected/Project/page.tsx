@@ -30,7 +30,7 @@ interface Project {
 
 export default function ProjectListPage() {
   const [projects, setProjects] = useState<Project[]>([
-    { id: "1", name: "Website Perusahaan", desc: "Membuat website profil perusahaan." },
+    { id: "1", name: "Pembuatan Website", desc: "Membuat website profil perusahaan." },
     { id: "2", name: "Aplikasi Kanban Tim", desc: "Manajemen tugas dengan sistem Kanban." },
   ]);
 
@@ -68,7 +68,7 @@ export default function ProjectListPage() {
       <div className="max-w-5xl mx-auto">
         {/* 🔹 Header + tombol tambah */}
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-primary">Daftar Project</h1>
+          <h1 className="text-3xl font-bold text-white">Daftar Project</h1>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button onClick={() => setEditingProject(null)}>+ New Project</Button>

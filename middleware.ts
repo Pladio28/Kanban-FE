@@ -1,11 +1,20 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
-const isProtectedRoute = createRouteMatcher(['/protected(.*)'])
+// 🧱 Tentukan route yang butuh login
+const isProtectedRoute = createRouteMatcher([
+  '/dashboard(.*)', // halaman dashboard
+  '/projects(.*)',  // halaman project (kalau ada)
+  '/api(.*)',       // kalau kamu mau lindungi API
+]);
 
 export default clerkMiddleware((auth, req) => {
-  if (isProtectedRoute(req)) auth().protect()
-})
+  if (isProtectedRoute(req)) auth().protect(); // 🚪 paksa login kalau belum auth
+});
 
 export const config = {
-  matcher: ['/((?!.*\\..*|_next).*)', '/', '/(api|trpc)(.*)']
-}
+  matcher: [
+    // Lindungi semua route kecuali _next, static file, dll.
+    '/((?!_next|.*\\..*|favicon.ico).*)',
+    '/', // halaman utama
+  ],
+};
