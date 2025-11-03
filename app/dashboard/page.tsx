@@ -17,7 +17,7 @@ export default function DashboardPage() {
         const token = await getToken();
 
         const res = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/project`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/projects`,
           { clerkId: user.id },
           {
             headers: {
