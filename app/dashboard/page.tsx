@@ -1,65 +1,102 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import axios from "axios";
-import { useUser, useAuth } from "@clerk/nextjs";
+import { getProjects, addProject, updateProject, deleteProject } from "@/lib/api/projects";
+import ProjectCard from "./components/ProjectCard";
+import ProjectModal from "./components/ProjectModal";
+import { Button } from "@/components/ui/button";
+import { Project } from "@/types/project";
 
 export default function DashboardPage() {
-  const { user, isLoaded } = useUser();
-  const { getToken } = useAuth();
-  const [status, setStatus] = useState("🔄 Menyambungkan ke server...");
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalPayload, setModalPayload] = useState<Project | null>(null);
 
   useEffect(() => {
-    const syncUser = async () => {
+    async function fetchProjects() {
       try {
-        // Pastikan Clerk sudah siap
-        if (!isLoaded || !user) {
-          console.log("⏳ Clerk belum siap...");
-          return;
-        }
-
-        // Ambil token sesi aktif dari Clerk
-        const token = await getToken();
-        if (!token) {
-          console.warn("❌ Token belum siap, tunggu Clerk load dulu.");
-          return;
-        }
-
-        // Ambil URL backend dari environment variable
-        const API_URL = process.env.NEXT_PUBLIC_API_URL;
-        if (!API_URL) {
-          console.error("❌ NEXT_PUBLIC_API_URL belum diatur di Vercel frontend.");
-          return;
-        }
-
-        // Kirim Clerk ID ke backend
-        const res = await axios.post(
-          `${API_URL}/api/projects`,
-          { clerkId: user.id },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`, // Kirim token Clerk
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        console.log("✅ Response backend:", res.data);
-        setStatus(`✅ ${res.data.message}`);
-      } catch (error: any) {
-        console.error("❌ Error sinkronisasi:", error.response?.data || error.message);
-        setStatus("❌ Gagal sinkronisasi user dengan backend.");
+        const data = await getProjects();
+        setProjects(data);
+      } catch (err) {
+        console.error("Failed to fetch projects:", err);
+      } finally {
+        setLoading(false);
       }
-    };
+    }
+    fetchProjects();
+  }, []);
 
-    syncUser();
-  }, [user, isLoaded, getToken]);
+  const openModal = (project?: Project) => {
+    setModalPayload(project ?? null);
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setModalPayload(null);
+  };
+
+  const handleSave = async (project: Project) => {
+    try {
+      if (project.id && projects.find((p) => p.id === project.id)) {
+        // update
+        const updated = await updateProject(project.id, project);
+        setProjects((prev) =>
+          prev.map((p) => (p.id === updated.id ? updated : p))
+        );
+      } else {
+        // add
+        const added = await addProject({ name: project.name, description: project.description });
+        setProjects((prev) => [...prev, added]);
+      }
+    } catch (err) {
+      console.error("Failed to save project:", err);
+    }
+    closeModal();
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteProject(id);
+      setProjects((prev) => prev.filter((p) => p.id !== id));
+    } catch (err) {
+      console.error("Failed to delete project:", err);
+    }
+  };
 
   return (
-    <div className="p-6">
-      <h1 className="text-xl font-semibold mb-2">Cek Clerk User</h1>
-      <p>Clerk ID: {user?.id || "Belum login"}</p>
-      <p className="mt-2">{status}</p>
-    </div>
+    <main className="p-8">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Project List</h1>
+        <Button onClick={() => openModal()}>+ Tambah Project</Button>
+      </div>
+
+      {loading ? (
+        <p>Loading...</p>
+      ) : projects.length === 0 ? (
+        <p>Belum ada project.</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {projects.map((project) => (
+            <ProjectCard
+              key={project.id}
+              project={project}
+              onEdit={() => openModal(project)}
+              onDelete={() => handleDelete(project.id)}
+            />
+          ))}
+        </div>
+      )}
+
+      {modalOpen && (
+        <ProjectModal
+          open={modalOpen}
+          payload={modalPayload}
+          onClose={closeModal}
+          onSave={handleSave}
+        />
+      )}
+    </main>
   );
 }

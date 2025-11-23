@@ -1,3 +1,5 @@
+"use client";
+
 import Link from 'next/link'
 import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
 
@@ -14,7 +16,7 @@ export default function Header() {
           </li>
           <SignedIn>
           <li>
-            <Link href='/protected/Project'>Project</Link>
+            <Link href='/dashboard'>Project</Link>
           </li>
           </SignedIn>
           <li>
