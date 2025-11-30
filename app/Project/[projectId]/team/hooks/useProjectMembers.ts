@@ -1,13 +1,11 @@
-"use client";
-
 import { useEffect, useState, useCallback } from "react";
 import { useMembersApi } from "@/lib/api/Members";
 
 export interface Member {
   id: string;
-  name: string;
+  name?: string;
   role: string;
-  email: string;
+  email?: string;
 }
 
 export const useProjectMembers = (projectId: string) => {
@@ -32,12 +30,13 @@ export const useProjectMembers = (projectId: string) => {
     fetchMembers();
   }, [fetchMembers]);
 
-  // FIX: hanya kirim clerk_user_id + role
-  const addMember = async (clerk_user_id: string, role: string) => {
+  const addMember = async (clerk_user_id: string, role?: string) => {
+    if (!clerk_user_id) throw new Error("User ID is required");
+
     try {
       const newMember = await api.addMember({
         clerk_user_id,
-        role,
+        role: role || "Member", // default role
         project_id: projectId,
       });
 

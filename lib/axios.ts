@@ -1,43 +1,34 @@
 "use client";
 
-import axios, { AxiosRequestConfig, AxiosRequestHeaders } from "axios";
+import { useRef } from "react";
+import axios, { AxiosInstance, AxiosRequestHeaders } from "axios";
 import { useAuth } from "@clerk/nextjs";
-import { useRef, useEffect } from "react";
 
-export const useApi = () => {
+export const useApi = (): AxiosInstance => {
   const { getToken, userId } = useAuth();
-  const apiRef = useRef<any>(null);
+  const apiRef = useRef<AxiosInstance | null>(null);
 
-  // Create axios instance sekali saja
   if (!apiRef.current) {
-    apiRef.current = axios.create({
+    const instance = axios.create({
       baseURL: process.env.NEXT_PUBLIC_API_URL + "/api",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
     });
-  }
 
-  useEffect(() => {
-    const instance = apiRef.current;
+    instance.interceptors.request.use(async (config) => {
+      if (typeof window !== "undefined") {
+        const token = await getToken();
+        const headers = config.headers as AxiosRequestHeaders;
 
-    const requestInterceptor = async (config: AxiosRequestConfig) => {
-      const token = await getToken(); // ambil token terbaru
-      const headers = (config.headers || {}) as AxiosRequestHeaders;
+        if (token) headers.Authorization = `Bearer ${token}`;
+        if (userId) headers["X-Clerk-User-Id"] = userId;
 
-      if (token) headers.Authorization = `Bearer ${token}`;
-      if (userId) headers["X-Clerk-User-Id"] = userId;
-
-      config.headers = headers;
+        config.headers = headers;
+      }
       return config;
-    };
+    });
 
-    const interceptorId = instance.interceptors.request.use(requestInterceptor);
-
-    return () => {
-      instance.interceptors.request.eject(interceptorId);
-    };
-  }, [getToken, userId]);
+    apiRef.current = instance;
+  }
 
   return apiRef.current;
 };
