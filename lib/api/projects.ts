@@ -1,27 +1,33 @@
-// lib/api/project.ts
-import api from "../axios";
+// lib/api/projects.ts
 import { Project } from "@/types/project";
+import { useApi } from "../axios";
 
-export const getProjects = async (): Promise<Project[]> => {
-  const res = await api.get("/api/projects");
-  return res.data.data;
-};
+export const useProjectsApi = () => {
+  const api = useApi();
 
-export const getProjectById = async (id: string): Promise<Project> => {
-  const res = await api.get(`/api/projects/${id}`);
-  return res.data.data;
-};
+  const getProjects = async (): Promise<Project[]> => {
+    const res = await api.get("/projects");
+    return res.data?.data ?? [];
+  };
 
-export const addProject = async (project: Omit<Project, "id">): Promise<Project> => {
-  const res = await api.post("/api/projects", project);
-  return res.data.data;
-};
+  const getProjectById = async (id: string): Promise<Project> => {
+    const res = await api.get(`/projects/${id}`);
+    return res.data.data;
+  };
 
-export const updateProject = async (id: string, project: Partial<Project>): Promise<Project> => {
-  const res = await api.put(`/api/projects/${id}`, project);
-  return res.data.data;
-};
+  const addProject = async (project: Omit<Project, "id">): Promise<Project> => {
+    const res = await api.post("/projects", project);
+    return res.data.data;
+  };
 
-export const deleteProject = async (id: string): Promise<void> => {
-  await api.delete(`/api/projects/${id}`);
+  const updateProject = async (id: string, project: Partial<Project>): Promise<Project> => {
+    const res = await api.put(`/projects/${id}`, project);
+    return res.data.data;
+  };
+
+  const deleteProject = async (id: string): Promise<void> => {
+    await api.delete(`/projects/${id}`);
+  };
+
+  return { getProjects, getProjectById, addProject, updateProject, deleteProject };
 };

@@ -23,10 +23,12 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html
-        lang='en'
-        className='scroll-smooth antialiased'
+        lang="en"
+        data-scroll-behavior="smooth"
+        className="antialiased"
         suppressHydrationWarning
       >
+
         <body className={`flex min-h-screen flex-col ${inter.className}`}>
           <ThemeProvider
             enableSystem
