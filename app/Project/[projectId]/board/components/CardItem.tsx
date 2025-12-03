@@ -10,12 +10,13 @@ import { CardType } from "../hooks/useKanban";
 type Props = {
   id: string;
   card: CardType;
+  isAdmin?: boolean;
   onOpen: (card: CardType) => void;
   onDelete: (cardId: string) => void;
   isOverlay?: boolean;
 };
 
-export default function CardItem({ id, card, onOpen, onDelete, isOverlay }: Props) {
+export default function CardItem({ id, card, onOpen, onDelete, isAdmin = false, isOverlay }: Props) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
 
   const style: React.CSSProperties = {
@@ -41,9 +42,12 @@ export default function CardItem({ id, card, onOpen, onDelete, isOverlay }: Prop
         {card.description && <div className="text-sm text-slate-500 mt-1 line-clamp-2">{card.description}</div>}
         {card.dueDate && <div className="text-xs text-slate-400 mt-2">Due: {card.dueDate}</div>}
       </div>
-      <button onClick={() => onDelete(card.id)} className="text-red-500 p-1 hover:bg-red-50 rounded">
-        <Trash2 className="w-4 h-4" />
-      </button>
+
+      {isAdmin ? (
+        <button onClick={() => onDelete(card.id)} className="text-red-500 p-1 hover:bg-red-50 rounded">
+          <Trash2 className="w-4 h-4" />
+        </button>
+      ) : null}
     </article>
   );
 }

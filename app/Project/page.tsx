@@ -7,6 +7,7 @@ import ProjectCard from "./components/ProjectCard";
 import ProjectModal from "./components/ProjectModal";
 import { Button } from "@/components/ui/button";
 
+export const dynamic = "force-dynamic";
 export default function DashboardPage() {
   const { getProjects, addProject, updateProject, deleteProject } = useProjectsApi();
   const [projects, setProjects] = useState<Project[]>([]);

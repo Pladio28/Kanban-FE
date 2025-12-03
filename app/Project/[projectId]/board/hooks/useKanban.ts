@@ -20,7 +20,12 @@ export type ColumnType = {
   cards: CardType[];
 };
 
-export const useKanban = (projectId?: string) => {
+/**
+ * useKanban(projectId, isAdmin)
+ * - isAdmin default false
+ * - admin-only actions will be no-op when isAdmin === false
+ */
+export const useKanban = (projectId?: string, isAdmin: boolean = false) => {
   const [columns, setColumns] = useState<ColumnType[]>([]);
   const [boardId, setBoardId] = useState<string | null>(null);
 
@@ -28,84 +33,89 @@ export const useKanban = (projectId?: string) => {
   const columnsApi = useColumnsApi();
   const cardsApi = useCardsApi();
 
-  // load board (by project) -> then load columns for that board
+  // load board (by project) -> then load columns and cards
   useEffect(() => {
     if (!projectId) return;
-  
+
     let mounted = true;
-  
+
     const fetchAll = async () => {
       try {
-        // 1) get boards
+        // 1) get boards for project
         const boards = await boardsApi.getBoardsByProject(projectId);
         let bId: string | null = boards?.[0]?.id ?? null;
-      
+
+        // if no board exists, create one
         if (!bId) {
           const created = await boardsApi.createBoard(projectId, "Board");
           bId = created?.id ?? null;
         }
-      
+
         if (!mounted) return;
         setBoardId(bId);
         if (!bId) return;
-      
-        // 2) get columns
+
+        // 2) get columns for board
         const fetchedColumns = await columnsApi.getColumns(bId);
-      
-        // 3) fetch cards for each column (INI BAGIAN YG HILANG DARI KODE LU)
+
+        // 3) fetch cards for each column (backend may provide nested or not)
         const cardsList = await Promise.all(
-          fetchedColumns.map((col: any) => cardsApi.getCardsByColumn(col.id))
+          (fetchedColumns ?? []).map((col: any) => cardsApi.getCardsByColumn(col.id).catch(() => []))
         );
-      
-        // 4) mapping final
-        const mappedColumns: ColumnType[] = fetchedColumns.map(
-          (col: any, index: number) => ({
-            id: col.id,
-            title: col.name ?? col.title,
-            cards: cardsList[index].map((t: any) => ({
-              id: t.id,
-              title: t.title,
-              description: t.description,
-              dueDate: t.due_date ?? null,
-            })),
-          })
-        );
-      
+
+        // 4) map to local types
+        const mappedColumns: ColumnType[] = (fetchedColumns ?? []).map((col: any, index: number) => ({
+          id: col.id,
+          title: col.name ?? col.title,
+          cards: (cardsList[index] ?? []).map((t: any) => ({
+            id: t.id,
+            title: t.title,
+            description: t.description,
+            dueDate: t.due_date ?? null,
+          })),
+        }));
+
         if (!mounted) return;
         setColumns(mappedColumns);
       } catch (err) {
         console.error("useKanban fetch error:", err);
       }
     };
-  
+
     fetchAll();
-  
+
     return () => {
       mounted = false;
     };
   }, [projectId]);
-  
-  // CREATE column -> POST /api/columns { boards_id, name }
-  const addColumn = async (title: string) => {
+
+  // helper to wrap admin-only functions
+  const adminOnly = <T extends (...args: any[]) => any>(fn: T) => {
+    return ((...args: any[]) => {
+      if (!isAdmin) {
+        console.warn("Aksi ini hanya untuk admin");
+        return;
+      }
+      return (fn as any)(...args);
+    }) as unknown as T;
+  };
+
+  // ===== Columns =====
+  const _addColumn = async (title: string) => {
     if (!boardId) {
       console.warn("No boardId yet when creating column");
       return;
     }
     try {
       const res = await columnsApi.createColumn(boardId, title);
-      const newColumn: ColumnType = {
-        id: res?.id ?? uuidv4(),
-        title: res?.name ?? title,
-        cards: [],
-      };
+      const newColumn: ColumnType = { id: res?.id ?? uuidv4(), title: res?.name ?? title, cards: [] };
       setColumns((prev) => [...prev, newColumn]);
     } catch (err) {
       console.error("addColumn error:", err);
     }
   };
 
-  // RENAME column -> PUT /api/columns/:id
-  const renameColumn = async (id: string, title: string) => {
+  const _renameColumn = async (id: string, title: string) => {
     try {
       await columnsApi.updateColumn(id, title);
       setColumns((prev) => prev.map((c) => (c.id === id ? { ...c, title } : c)));
@@ -114,8 +124,7 @@ export const useKanban = (projectId?: string) => {
     }
   };
 
-  // DELETE column
-  const deleteColumn = async (id: string) => {
+  const _deleteColumn = async (id: string) => {
     try {
       await columnsApi.deleteColumn(id);
       setColumns((prev) => prev.filter((c) => c.id !== id));
@@ -124,20 +133,19 @@ export const useKanban = (projectId?: string) => {
     }
   };
 
-  // ADD card -> POST /api/cards { columns_id, title, description?, due_date? }
-  const addCard = async (columnId: string, title: string) => {
+  // ===== Cards =====
+  const _addCard = async (columnId: string, title: string) => {
     const newCard: CardType = { id: uuidv4(), title };
     setColumns((prev) => prev.map((c) => (c.id === columnId ? { ...c, cards: [...c.cards, newCard] } : c)));
     try {
       const res = await cardsApi.createCard(columnId, title);
-      // update card id/title if backend returns real id
       setColumns((prev) =>
         prev.map((c) =>
           c.id === columnId
             ? {
                 ...c,
                 cards: c.cards.map((card) =>
-                  card.id === newCard.id ? { ...card, id: res?.id ?? newCard.id, title: res?.title ?? newCard.title } : card
+                  card.id === newCard.id ? { ...card, id: res?.id ?? card.id, title: res?.title ?? card.title } : card
                 ),
               }
             : c
@@ -148,18 +156,15 @@ export const useKanban = (projectId?: string) => {
     }
   };
 
-  // update card (including moving columns by changing columns_id)
-  const updateCard = async (cardId: string, data: Partial<CardType>) => {
+  const _updateCard = async (cardId: string, data: Partial<CardType>) => {
     const payload: any = { ...data };
     if (data.dueDate !== undefined) {
       payload.due_date = data.dueDate;
       delete payload.dueDate;
     }
 
-    // optimistic UI
-    setColumns((prev) =>
-      prev.map((c) => ({ ...c, cards: c.cards.map((card) => (card.id === cardId ? { ...card, ...data } : card)) }))
-    );
+    // optimistic local update
+    setColumns((prev) => prev.map((c) => ({ ...c, cards: c.cards.map((card) => (card.id === cardId ? { ...card, ...data } : card)) })));
 
     try {
       await cardsApi.updateCard(cardId, payload);
@@ -168,7 +173,7 @@ export const useKanban = (projectId?: string) => {
     }
   };
 
-  const deleteCard = async (columnId: string, cardId: string) => {
+  const _deleteCard = async (columnId: string, cardId: string) => {
     setColumns((prev) => prev.map((c) => (c.id === columnId ? { ...c, cards: c.cards.filter((t) => t.id !== cardId) } : c)));
     try {
       await cardsApi.deleteCard(cardId);
@@ -177,7 +182,7 @@ export const useKanban = (projectId?: string) => {
     }
   };
 
-  // move card: update local state and call PUT /api/cards/:id { columns_id, position }
+  // ===== Move Card (allowed to everyone) =====
   const moveCard = async (cardId: string, destColumnId: string, destIndex: number) => {
     let movingCard: CardType | null = null;
 
@@ -207,14 +212,15 @@ export const useKanban = (projectId?: string) => {
     }
   };
 
+  // export admin-wrapped functions
   return {
     columns,
-    addColumn,
-    renameColumn,
-    deleteColumn,
-    addCard,
-    updateCard,
-    deleteCard,
+    addColumn: adminOnly(_addColumn),
+    renameColumn: adminOnly(_renameColumn),
+    deleteColumn: adminOnly(_deleteColumn),
+    addCard: adminOnly(_addCard),
+    updateCard: adminOnly(_updateCard),
+    deleteCard: adminOnly(_deleteCard),
     moveCard,
     boardId,
   };
