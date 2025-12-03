@@ -1,3 +1,4 @@
+// Project/[projectId]/board/components/Board.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -14,25 +15,16 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
 
-import Column from "../components/Column";
-import CardItem from "../components/CardItem";
-import UniversalModal from "../components/UniversalModal";
-import { useKanban, ColumnType, CardType } from "../hooks/useKanban";
+import Column from "./Column";
+import CardItem from "./CardItem";
+import UniversalModal from "./UniversalModal";
+import { useKanban, CardType } from "../hooks/useKanban";
 import { Button } from "@/components/ui/button";
 
-type Props = { projectId: string };
+type Props = { projectId?: string };
 
 export default function Board({ projectId }: Props) {
-  const {
-    columns,
-    addColumn,
-    addCard,
-    updateCard,
-    deleteCard,
-    renameColumn,
-    deleteColumn,
-    moveCard,
-  } = useKanban(projectId);
+  const { columns, addColumn, addCard, updateCard, deleteCard, renameColumn, deleteColumn, moveCard } = useKanban(projectId);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"editCard" | "addColumn" | "editColumn" | null>(null);
@@ -41,9 +33,7 @@ export default function Board({ projectId }: Props) {
   const [overlayCard, setOverlayCard] = useState<CardType | null>(null);
   const [isMounted, setIsMounted] = useState(false);
 
-  useEffect(() => {
-    setIsMounted(true); // client only render
-  }, []);
+  useEffect(() => setIsMounted(true), []);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
@@ -105,12 +95,14 @@ export default function Board({ projectId }: Props) {
     const activeIdStr = active.id as string;
     const overIdStr = over.id as string;
 
+    // if over is a column id -> append to end
     const destColumn = columns.find((c) => c.id === overIdStr);
     if (destColumn) {
       moveCard(activeIdStr, destColumn.id, destColumn.cards.length);
       return;
     }
 
+    // otherwise if over is a card id => insert at position
     const destLoc = findCardLocation(overIdStr);
     if (!destLoc) return;
     moveCard(activeIdStr, destLoc.colId, destLoc.index);
@@ -121,38 +113,37 @@ export default function Board({ projectId }: Props) {
     setOverlayCard(null);
   };
 
-  if (!isMounted) return null; // prevent SSR hydration mismatch
+  if (!isMounted) return null;
 
   const droppableIds = columns.flatMap((c) => [c.id, ...c.cards.map((t) => t.id)]);
 
   return (
     <>
       <div className="flex items-center justify-between mb-4">
-        <div className="text-white text-lg font-semibold">🚀 My Kanban Board</div>
-        <Button onClick={() => openModal("addColumn")} className="bg-teal-600 hover:bg-teal-700">
-          + Kolom Baru
-        </Button>
+        <div className="flex items-center gap-3">
+          <div className="text-white text-lg font-semibold">🚀 My Kanban Board</div>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button onClick={() => openModal("addColumn")} className="bg-teal-600 hover:bg-teal-700">
+            + Kolom Baru
+          </Button>
+        </div>
       </div>
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={onDragStart}
-        onDragEnd={onDragEnd}
-        onDragCancel={onDragCancel}
-      >
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={onDragCancel}>
         <div className="flex gap-6 overflow-x-auto pb-8">
           <SortableContext items={droppableIds} strategy={rectSortingStrategy}>
             {columns.map((col) => (
-              <Column
-                key={col.id}
-                column={col}
-                onAddCard={(colId, title) => addCard(colId, title)}
-                onDeleteColumn={(colId) => deleteColumn(colId)}
-                onEditColumnTitle={(colId, title) => openModal("editColumn", { id: colId, title })}
-                onOpenCard={(card) => openModal("editCard", card)}
-                onDeleteCard={(colId, cardId) => deleteCard(colId, cardId)}
-              />
+              <div key={col.id} className="min-w-[300px]">
+                <Column
+                  column={col}
+                  onAddCard={(colId, title) => addCard(colId, title)}
+                  onDeleteColumn={(colId) => deleteColumn(colId)}
+                  onEditColumnTitle={(colId, title) => openModal("editColumn", { id: colId, title })}
+                  onOpenCard={(card) => openModal("editCard", card)}
+                  onDeleteCard={(colId, cardId) => deleteCard(colId, cardId)}
+                />
+              </div>
             ))}
           </SortableContext>
         </div>

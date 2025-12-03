@@ -11,7 +11,9 @@ export const useApi = (): AxiosInstance => {
   if (!apiRef.current) {
     const instance = axios.create({
       baseURL: process.env.NEXT_PUBLIC_API_URL + "/api",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+      "Content-Type": "application/json" ,
+    },
     });
 
     instance.interceptors.request.use(async (config) => {

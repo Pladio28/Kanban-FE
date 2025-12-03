@@ -8,10 +8,11 @@ import { cn } from "@/lib/utils";
 
 interface Props {
   member: Member;
-  onDelete: () => void;
+  onDelete?: () => void;
+  isAdmin?: boolean;
 }
 
-const MemberCard: FC<Props> = ({ member, onDelete }) => {
+const MemberCard: FC<Props> = ({ member, onDelete, isAdmin }) => {
   const firstChar = member.name ? member.name.charAt(0) : "?";
 
   return (
@@ -35,18 +36,20 @@ const MemberCard: FC<Props> = ({ member, onDelete }) => {
         <p className="text-gray-500 text-xs">{member.email}</p>
       </div>
 
-      <div className="flex justify-center opacity-0 group-hover:opacity-100 transition-all">
-        <Button
-          size="sm"
-          variant="destructive"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete();
-          }}
-        >
-          Delete
-        </Button>
-      </div>
+      {isAdmin && (
+        <div className="flex justify-center opacity-0 group-hover:opacity-100 transition-all">
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete?.();
+            }}
+          >
+            Delete
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

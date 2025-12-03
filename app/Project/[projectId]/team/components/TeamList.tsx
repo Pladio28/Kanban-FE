@@ -6,10 +6,11 @@ import { Member } from "../hooks/useProjectMembers";
 
 interface TeamListProps {
   members: Member[];
-  onDeleteMember: (memberId: string) => void;
+  onDeleteMember?: (memberId: string) => void;
+  isAdmin: boolean;
 }
 
-const TeamList: FC<TeamListProps> = ({ members, onDeleteMember }) => {
+const TeamList: FC<TeamListProps> = ({ members, onDeleteMember, isAdmin }) => {
   if (!members || members.length === 0) {
     return (
       <div className="text-sm text-slate-500">
@@ -24,7 +25,8 @@ const TeamList: FC<TeamListProps> = ({ members, onDeleteMember }) => {
         <MemberCard
           key={m.id}
           member={m}
-          onDelete={() => onDeleteMember(m.id)}
+          onDelete={() => onDeleteMember?.(m.id)}
+          isAdmin={isAdmin}
         />
       ))}
     </div>
