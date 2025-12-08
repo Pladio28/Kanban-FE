@@ -1,5 +1,7 @@
 
+import { lazy } from "react";
 import ProjectNav from "./components/ProjectNav";
+import { serializeUseCacheCacheStore } from "next/dist/server/resume-data-cache/cache-store";
 
 export default function ProjectLayout({
   children,
