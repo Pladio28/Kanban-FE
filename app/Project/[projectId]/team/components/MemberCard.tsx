@@ -1,10 +1,21 @@
 "use client";
 
-import { FC } from "react";
+import { FC, useState } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Member } from "../hooks/useProjectMembers";
 import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 
 interface Props {
   member: Member;
@@ -15,10 +26,12 @@ interface Props {
 const MemberCard: FC<Props> = ({ member, onDelete, isAdmin }) => {
   const firstChar = member.name ? member.name.charAt(0) : "?";
 
+  const canDelete = isAdmin && !member.isSelf; // 🔥 ADMIN GA BISA HAPUS DIRI SENDIRI
+
   return (
     <div
       className={cn(
-        "group relative bg-[#0f172a] border border-white/10 rounded-xl p-5 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/20 hover:border-blue-500/40 hover:scale-[1.03] cursor-pointer flex flex-col justify-between min-h-[220px]"
+        "group relative bg-[#0f172a] border border-white/10 rounded-xl p-5 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/20 hover:border-blue-500/40 hover:scale-[1.03] flex flex-col justify-between min-h-[220px]"
       )}
     >
       <div className="flex flex-col items-center text-center mb-4">
@@ -36,18 +49,35 @@ const MemberCard: FC<Props> = ({ member, onDelete, isAdmin }) => {
         <p className="text-gray-500 text-xs">{member.email}</p>
       </div>
 
-      {isAdmin && (
+      {canDelete && (
         <div className="flex justify-center opacity-0 group-hover:opacity-100 transition-all">
-          <Button
-            size="sm"
-            variant="destructive"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete?.();
-            }}
-          >
-            Delete
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button size="sm" variant="destructive">
+                Delete
+              </Button>
+            </AlertDialogTrigger>
+
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Hapus Member?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Member <b>{member.name}</b> akan dihapus dari project ini.
+                  Tindakan ini tidak dapat dibatalkan.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-red-600 hover:bg-red-700"
+                  onClick={onDelete}
+                >
+                  Hapus
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       )}
     </div>

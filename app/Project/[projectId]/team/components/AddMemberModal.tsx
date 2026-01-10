@@ -17,13 +17,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { UserOption } from "../hooks/useUsers";
+import { toast } from "sonner";
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   onAddMember: (clerk_user_id: string, role: string) => Promise<void>;
   users: UserOption[];
-  isAdmin?: boolean;
 }
 
 const AddMemberModal: FC<Props> = ({
@@ -31,25 +31,26 @@ const AddMemberModal: FC<Props> = ({
   onClose,
   onAddMember,
   users,
-  isAdmin,
 }) => {
-  // ❗ Kalau bukan admin → modal tidak akan muncul
-  if (!isAdmin) return null;
-
   const [selectedUserId, setSelectedUserId] = useState("");
   const [role, setRole] = useState("Member");
   const [loading, setLoading] = useState(false);
 
   const submit = async () => {
-    if (!selectedUserId) return;
+    if (!selectedUserId) {
+      toast.warning("Pilih user terlebih dahulu");
+      return;
+    }
+
     try {
       setLoading(true);
       await onAddMember(selectedUserId, role);
+      toast.success("Member berhasil ditambahkan");
       setSelectedUserId("");
       setRole("Member");
       onClose();
     } catch (err) {
-      console.error(err);
+      toast.error("Gagal menambahkan member");
     } finally {
       setLoading(false);
     }
@@ -63,14 +64,12 @@ const AddMemberModal: FC<Props> = ({
         </DialogHeader>
 
         <div className="space-y-3">
-          {/* USER SELECT */}
           <div>
             <label>User</label>
             <Select value={selectedUserId} onValueChange={setSelectedUserId}>
               <SelectTrigger>
                 <SelectValue placeholder="Select user" />
               </SelectTrigger>
-
               <SelectContent>
                 {users.length === 0 ? (
                   <div className="p-2 text-sm text-slate-500">
@@ -87,12 +86,11 @@ const AddMemberModal: FC<Props> = ({
             </Select>
           </div>
 
-          {/* ROLE SELECT */}
           <div>
             <label>Role</label>
             <Select value={role} onValueChange={setRole}>
               <SelectTrigger>
-                <SelectValue placeholder="Select role" />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="Admin">Admin</SelectItem>
@@ -102,13 +100,11 @@ const AddMemberModal: FC<Props> = ({
           </div>
         </div>
 
-        {/* FOOTER */}
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-
-          <Button onClick={submit} disabled={loading || !selectedUserId}>
+          <Button onClick={submit} disabled={loading}>
             {loading ? "Adding..." : "Add"}
           </Button>
         </DialogFooter>

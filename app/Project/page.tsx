@@ -7,12 +7,28 @@ import ProjectCard from "./components/ProjectCard";
 import ProjectModal from "./components/ProjectModal";
 import { Button } from "@/components/ui/button";
 
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+
 export default function DashboardPage() {
-  const { getProjects, addProject, updateProject, deleteProject } = useProjectsApi();
+  const { getProjects, addProject, updateProject, deleteProject } =
+    useProjectsApi();
+
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [modalOpen, setModalOpen] = useState(false);
   const [modalPayload, setModalPayload] = useState<Project | null>(null);
+
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchProjects() {
@@ -42,9 +58,14 @@ export default function DashboardPage() {
     try {
       if (project.id && projects.find((p) => p.id === project.id)) {
         const updated = await updateProject(project.id, project);
-        setProjects((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+        setProjects((prev) =>
+          prev.map((p) => (p.id === updated.id ? updated : p))
+        );
       } else {
-        const added = await addProject({ name: project.name, description: project.description });
+        const added = await addProject({
+          name: project.name,
+          description: project.description,
+        });
         setProjects((prev) => [...prev, added]);
       }
     } catch (err) {
@@ -64,12 +85,15 @@ export default function DashboardPage() {
 
   return (
     <main className="p-8">
-    <div className="flex justify-between items-center mb-8">
-      <h1 className="text-3xl font-bold">Daftar Project</h1>
-      <Button onClick={() => openModal()} className="bg-teal-700 hover:bg-teal-800">
-        + New Project
-      </Button>
-    </div>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Daftar Project</h1>
+        <Button
+          onClick={() => openModal()}
+          className="bg-teal-700 hover:bg-teal-800"
+        >
+          + New Project
+        </Button>
+      </div>
 
       {loading ? (
         <p>Loading...</p>
@@ -82,20 +106,50 @@ export default function DashboardPage() {
               key={project.id}
               project={project}
               onEdit={() => openModal(project)}
-              onDelete={() => handleDelete(project.id)}
+              onDelete={() => setDeleteId(project.id)}
             />
           ))}
         </div>
       )}
 
-      {modalOpen && (
-        <ProjectModal
-          open={modalOpen}
-          payload={modalPayload}
-          onClose={closeModal}
-          onSave={handleSave}
-        />
-      )}
+      {/* MODAL ADD / EDIT */}
+      <ProjectModal
+        open={modalOpen}
+        payload={modalPayload}
+        onClose={closeModal}
+        onSave={handleSave}
+      />
+
+      {/* POPUP CONFIRM DELETE */}
+      <AlertDialog
+        open={!!deleteId}
+        onOpenChange={(v) => !v && setDeleteId(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Project?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Project yang dihapus tidak bisa dikembalikan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeleteId(null)}>
+              Batal
+            </AlertDialogCancel>
+
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => {
+                if (deleteId) handleDelete(deleteId);
+                setDeleteId(null);
+              }}
+            >
+              Ya, Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }

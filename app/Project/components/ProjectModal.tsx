@@ -2,7 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { Project } from "@/types/project";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -14,7 +20,12 @@ type Props = {
   onSave: (project: Project) => void;
 };
 
-export default function ProjectModal({ open, payload, onClose, onSave }: Props) {
+export default function ProjectModal({
+  open,
+  payload,
+  onClose,
+  onSave,
+}: Props) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
 
@@ -35,27 +46,39 @@ export default function ProjectModal({ open, payload, onClose, onSave }: Props) 
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent aria-describedby={undefined}>
         <DialogHeader>
-          <DialogTitle>{payload ? "Edit Project" : "Tambah Project"}</DialogTitle>
+          <DialogTitle>
+            {payload ? "Edit Project" : "Tambah Project"}
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 mt-2">
           <div>
             <label className="text-sm block mb-1">Nama Project</label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} />
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
           </div>
           <div>
             <label className="text-sm block mb-1">Deskripsi</label>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} />
+            <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
           </div>
         </div>
 
         <DialogFooter>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose}>Batal</Button>
-            <Button onClick={handleSave}>Simpan</Button>
+            <Button variant="outline" onClick={onClose}>
+              Batal
+            </Button>
+            <Button onClick={handleSave} disabled={!name.trim()}>
+              Simpan
+            </Button>
           </div>
         </DialogFooter>
       </DialogContent>

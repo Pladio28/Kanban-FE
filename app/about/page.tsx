@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useUser } from "@clerk/nextjs"; // 🔹 Import untuk cek login
-import { useRouter } from "next/navigation"; // 🔹 Router untuk redirect
+import { useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 
 export default function AboutPage() {
   const { user, isSignedIn } = useUser();
@@ -12,75 +12,87 @@ export default function AboutPage() {
 
   const handleClick = () => {
     if (isSignedIn) {
-      // ✅ Jika sudah login → arahkan ke halaman Project
       router.push("/protected/Project");
     } else {
-      // ❌ Jika belum login → arahkan ke halaman Sign Up
       router.push("/sign-up");
     }
   };
 
   return (
-    // 🧱 <main> = wadah utama halaman, kasih warna dasar & padding umum
     <main className="min-h-screen bg-background text-foreground">
 
-      {/* 🎯 HERO SECTION */}
-      {/* background penuh (bg-blue-50), isi tetap di tengah (max-w-3xl mx-auto) */}
-      <section className="bg-white py-16 px-6 md:px-20">
+      {/* 🎯 HERO */}
+      <section className="bg-white py-20 px-6 md:px-20 border-b">
         <div className="max-w-3xl mx-auto text-center">
-          <h1 className="text-4xl font-bold text-primary mb-4">
-            Tentang Project Kanban
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            Tentang <span className="text-blue-600">Project Kanban</span>
           </h1>
-          <p className="text-lg text-muted-foreground mb-6">
-            Kanban adalah aplikasi manajemen tugas berbasis web yang membantu tim bekerja
-            lebih efisien dengan sistem papan Kanban yang sederhana, cepat, dan intuitif.
+
+          <p className="text-lg text-gray-600 leading-relaxed mb-8">
+            Project Kanban adalah aplikasi manajemen tugas modern yang dirancang 
+            untuk meningkatkan produktivitas dan kolaborasi tim Anda.
+            Cepat, intuitif, dan sepenuhnya fleksibel.
           </p>
-          <Button   onClick={handleClick} className="bg-primary text-primary-foreground hover:bg-secondary transition">
+
+        <Link href="/sign-up">
+          <Button
+            onClick={handleClick}
+            className="bg-blue-600 px-8 py-6 text-lg text-white hover:bg-blue-700 rounded-xl shadow"
+          >
             Coba Sekarang
           </Button>
+          </Link>
         </div>
       </section>
 
-      {/* 🌱 VISI & MISI */}
-      {/* warna berbeda biar ada pembeda antar section */}
-      <section className="bg-second py-16 px-6 md:px-20">
+      {/* 🌱 VISI MISI */}
+      <section className="bg-slate-50 py-20 px-6 md:px-20">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-semibold text-white mb-6">Visi & Misi</h2>
-          <div className="space-y-4">
-            <p>
-              <strong>Visi:</strong> Menjadi platform produktivitas yang memudahkan kolaborasi tim di mana saja dan kapan saja.
+          <h2 className="text-3xl font-semibold text-gray-900 mb-8 text-center">
+            Visi & Misi
+          </h2>
+
+          <div className="bg-white p-8 rounded-2xl shadow-lg border border-slate-200">
+            <p className="text-lg text-gray-700 mb-4">
+              <strong>Visi:</strong> Menjadi platform produktivitas modern yang mempercepat
+              kolaborasi lintas tim dan organisasi.
             </p>
-            <p><strong>Misi:</strong></p>
-            <ul className="list-disc list-inside ml-4">
-              <li>Menyediakan alat manajemen tugas yang mudah digunakan.</li>
-              <li>Membantu tim mencapai target dengan alur kerja yang jelas.</li>
-              <li>Meningkatkan efisiensi tanpa mengorbankan pengalaman pengguna.</li>
+
+            <p className="text-lg text-gray-700 mb-3">
+              <strong>Misi:</strong>
+            </p>
+
+            <ul className="list-disc list-inside text-gray-600 space-y-2 ml-3">
+              <li>Menyediakan alat manajemen tugas yang mudah dipahami.</li>
+              <li>Membantu tim bekerja lebih cepat dan terorganisir.</li>
+              <li>Membuat pengalaman pengguna yang sederhana namun powerful.</li>
             </ul>
           </div>
         </div>
       </section>
 
-      {/* ⚙️ FITUR UNGGULAN */}
-      {/* gunakan warna abu muda agar tidak monoton */}
-      <section className="bg-gray-50 py-16 px-6 md:px-20">
+      {/* ⚙️ FITUR */}
+      <section className="bg-white py-20 px-6 md:px-20">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-2xl font-semibold text-primary mb-6 text-center">
+          <h2 className="text-3xl font-semibold text-gray-900 text-center mb-12">
             Fitur Unggulan
           </h2>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {[
               "Drag & Drop Task",
               "Mode Gelap & Terang",
-              "Real-time Update",
-              "Tampilan Minimalis & Responsif",
-              "Manajemen Proyek Mudah",
+              "Real-time Sync",
+              "Tampilan Minimalis",
+              "Custom Workflow",
+              "Collaborative Planning",
             ].map((fitur, i) => (
               <Card
                 key={i}
-                className="bg-card border border-border shadow-sm transition duration-300 hover:-translate-y-2 hover:shadow-lg hover:border-primary/40"
+                className="border border-slate-200 bg-white rounded-xl shadow-sm hover:shadow-xl hover:-translate-y-2 transition duration-300"
               >
                 <CardContent className="p-6 text-center">
-                  <p className="font-medium text-foreground">{fitur}</p>
+                  <p className="font-medium text-gray-800 text-lg">{fitur}</p>
                 </CardContent>
               </Card>
             ))}
@@ -88,13 +100,14 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* 👥 TIM PENGEMBANG */}
-      {/* warna sedikit transparan dari tema utama */}
-      <section className="bg-secondary py-16 px-6 md:px-20">
+      {/* 👥 TIM */}
+      <section className="bg-slate-100 py-20 px-6 md:px-20">
         <div className="max-w-5xl mx-auto">
-          <h2 className="bg-second text-2xl font-semibold text-se mb-8 text-center">
+
+          <h2 className="text-3xl font-semibold text-gray-900 text-center mb-12">
             Tim Pengembang
           </h2>
+
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {[
               {
@@ -108,11 +121,11 @@ export default function AboutPage() {
             ].map((member, i) => (
               <Card
                 key={i}
-                className="text-center border border-border shadow-sm bg-card hover:border-primary transition duration-300 hover:-translate-y-2"
+                className="border border-slate-200 bg-white rounded-xl text-center shadow-sm hover:shadow-xl hover:-translate-y-2 transition duration-300"
               >
                 <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold text-white">{member.name}</h3>
-                  <p className="text-sm text-muted-foreground mb-2">{member.role}</p>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-1">{member.name}</h3>
+                  <p className="text-gray-500">{member.role}</p>
                 </CardContent>
               </Card>
             ))}
@@ -121,29 +134,35 @@ export default function AboutPage() {
       </section>
 
       {/* 💻 TEKNOLOGI */}
-      {/* warna abu terang biar tetap netral */}
-      <section className="bg-slate-50 py-16 px-6 md:px-20 text-center">
+      <section className="bg-slate-50 py-20 px-6 md:px-20 text-center">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-semibold text-primary mb-6">
+          <h2 className="text-3xl font-semibold text-gray-900 mb-6">
             Teknologi yang Digunakan
           </h2>
-          <p className="text-muted-foreground">
-            <strong>Frontend:</strong> Next.js<br />
-            <strong>Backend:</strong> Express.js<br />
-            <strong>Database:</strong> Postgree <br />
+
+          <p className="text-gray-600 text-lg leading-relaxed">
+            <strong>Frontend:</strong> Next.js <br />
+            <strong>Backend:</strong> Express.js <br />
+            <strong>Database:</strong> PostgreSQL <br />
             <strong>UI Library:</strong> ShadCN/UI
           </p>
         </div>
       </section>
 
-      {/* 🌟 NILAI & CTA */}
-      {/* bagian terakhir, background lembut */}
-      <section className="bg-blue-100 py-20 px-6 md:px-20 text-center">
+      {/* 🌟 CTA AKHIR */}
+      <section className="bg-blue-50 py-20 px-6 md:px-20 text-center">
         <div className="max-w-3xl mx-auto">
-          <p className="text-lg text-primary mb-8">
-            Kami percaya bahwa kerja tim, inovasi, dan transparansi adalah kunci untuk menciptakan
-            solusi digital yang bermanfaat bagi semua orang.
+          <p className="text-xl text-gray-700 leading-relaxed mb-8">
+            Kami percaya pada kesederhanaan, kolaborasi, dan kualitas.
+            Bergabunglah dan jadikan pekerjaan tim Anda lebih produktif.
           </p>
+
+          <Button
+            onClick={handleClick}
+            className="bg-blue-600 px-10 py-6 text-lg text-white hover:bg-blue-700 rounded-xl shadow"
+          >
+            Mulai Sekarang
+          </Button>
         </div>
       </section>
     </main>
