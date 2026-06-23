@@ -10,33 +10,38 @@ export default function ProjectNav() {
   const active = pathname.includes("team") ? "team" : "board";
 
   return (
-    <nav className="relative flex w-fit bg-[#1E293B] rounded-2xl p-1 shadow-lg">
+    <nav className="flex gap-6 border-b border-white/10 pb-1">
+
       <Link
         href={`/Project/${projectId}/board`}
         className={clsx(
-          "px-6 py-2 rounded-xl text-sm font-semibold transition-all relative z-10",
-          active === "board" ? "text-white" : "text-gray-300 hover:text-white"
+          "relative text-sm font-medium pb-2 transition",
+          active === "board"
+            ? "text-white"
+            : "text-gray-400 hover:text-white"
         )}
       >
         Board
+        {active === "board" && (
+          <span className="absolute left-0 bottom-0 w-full h-[2px] bg-red-500 rounded-full shadow-[0_0_10px_rgba(255,0,0,0.7)]" />
+        )}
       </Link>
 
       <Link
         href={`/Project/${projectId}/team`}
         className={clsx(
-          "px-6 py-2 rounded-xl text-sm font-semibold transition-all relative z-10",
-          active === "team" ? "text-white" : "text-gray-300 hover:text-white"
+          "relative text-sm font-medium pb-2 transition",
+          active === "team"
+            ? "text-white"
+            : "text-gray-400 hover:text-white"
         )}
       >
         Team
+        {active === "team" && (
+          <span className="absolute left-0 bottom-0 w-full h-[2px] bg-red-500 rounded-full shadow-[0_0_10px_rgba(255,0,0,0.7)]" />
+        )}
       </Link>
 
-      <div
-        className={clsx(
-          "absolute top-1 bottom-1 w-[50%] rounded-xl bg-blue-600 transition-all duration-300",
-          active === "board" ? "left-1" : "left-[50%]"
-        )}
-      />
     </nav>
   );
 }

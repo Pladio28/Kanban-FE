@@ -15,13 +15,28 @@ export const useProjectsApi = () => {
     return res.data.data;
   };
 
-  const addProject = async (project: Omit<Project, "id">): Promise<Project> => {
-    const res = await api.post("/projects", project);
+  // 🔥 Fix: Omit<Project, "id"> sudah include deadline karena ada di type Project
+  const addProject = async (
+    project: Omit<Project, "id" | "createdAt">
+  ): Promise<Project> => {
+    const res = await api.post("/projects", {
+      name: project.name,
+      description: project.description,
+      deadline: project.deadline ?? null, // 🔥 kirim deadline ke BE
+    });
     return res.data.data;
   };
 
-  const updateProject = async (id: string, project: Partial<Project>): Promise<Project> => {
-    const res = await api.put(`/projects/${id}`, project);
+  // 🔥 Fix: updateProject juga kirim deadline
+  const updateProject = async (
+    id: string,
+    project: Partial<Omit<Project, "id" | "createdAt">>
+  ): Promise<Project> => {
+    const res = await api.put(`/projects/${id}`, {
+      name: project.name,
+      description: project.description,
+      deadline: project.deadline ?? null, // 🔥 kirim deadline ke BE
+    });
     return res.data.data;
   };
 

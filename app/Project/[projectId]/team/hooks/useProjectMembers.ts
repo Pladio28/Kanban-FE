@@ -14,7 +14,7 @@ export interface Member {
 
 export const useProjectMembers = (projectId: string) => {
   const api = useMembersApi();
-  const { user } = useUser(); // 🔥 CURRENT USER
+  const { user, isSignedIn } = useUser();
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -33,7 +33,8 @@ export const useProjectMembers = (projectId: string) => {
   };
 
   const fetchMembers = useCallback(async () => {
-    if (!projectId) return;
+    // Stop fetch kalau belum login atau projectId kosong
+    if (!projectId || !isSignedIn) return;
 
     try {
       setLoading(true);
@@ -46,17 +47,20 @@ export const useProjectMembers = (projectId: string) => {
 
         return {
           ...mergedUser,
-          isSelf: user?.id === m.clerk_user_id, // 🔥 Set FLAG DI SINI
+          isSelf: user?.id === m.clerk_user_id,
         };
       });
 
       setMembers(merged);
-    } catch (err) {
-      console.error("Failed to fetch members:", err);
+    } catch (err: any) {
+      // Abaikan 401 saat logout — bukan error yang perlu ditampilkan
+      if (err?.response?.status !== 401) {
+        console.error("Failed to fetch members:", err);
+      }
     } finally {
       setLoading(false);
     }
-  }, [projectId, user]);
+  }, [projectId, user, isSignedIn]);
 
   useEffect(() => {
     fetchMembers();

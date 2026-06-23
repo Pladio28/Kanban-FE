@@ -4,68 +4,35 @@
 
 @layer base {
   :root {
-    /* === Warna Utama (Light Mode) === */
-    --background: 0 0% 100%; /* Putih */
-    --foreground: 222.2 47.4% 11.2%; /* Teks utama */
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 224 71.4% 4.1%;
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 100%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 224 71.4% 4.1%;
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 100%;
 
-    /* Warna tema yang kamu inginkan */
-    --primary: 188 100% 21%; /* #005D69 */
-    --primary-foreground: 0 0% 100%; /* Putih */
-
-    --secondary: 220 31% 15%; /* #182233 */
-    --secondary-foreground: 0 0% 100%; /* Putih */
-
-    --muted: 220 14.3% 95.9%;
-    --muted-foreground: 220 8.9% 46.1%;
-
-    --accent: 220 14.3% 95.9%;
-    --accent-foreground: 220.9 39.3% 11%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 20% 98%;
-
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 188 100% 21%; /* disamakan dengan primary */
-
-    --radius: 0.5rem;
-  }
-
-  /* === Warna Mode Gelap === */
-  .dark {
-    --background: 220 31% 15%; /* #182233 */
-    --foreground: 210 20% 98%; /* teks terang */
-
-    --card: 220 31% 15%;
-    --card-foreground: 210 20% 98%;
-
-    --popover: 220 31% 15%;
-    --popover-foreground: 210 20% 98%;
-
-    --primary: 188 100% 26%; /* sedikit lebih terang dari #005D69 */
+    --primary: 0 72% 51%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 188 100% 21%; /* biru kehijauan */
+    --secondary: 0 0% 12%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 215 27.9% 16.9%;
-    --muted-foreground: 217.9 10.6% 64.9%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 64%;
 
-    --accent: 215 27.9% 16.9%;
-    --accent-foreground: 210 20% 98%;
+    --accent: 0 0% 15%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 20% 98%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 215 27.9% 16.9%;
-    --input: 215 27.9% 16.9%;
-    --ring: 188 100% 26%;
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 0 72% 51%;
+
+    --radius: 0.5rem;
   }
 }
 
@@ -74,6 +41,6 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-black text-white;
   }
 }

@@ -33,7 +33,7 @@ const AddMemberModal: FC<Props> = ({
   users,
 }) => {
   const [selectedUserId, setSelectedUserId] = useState("");
-  const [role, setRole] = useState("Member");
+  const [role, setRole] = useState("DEVELOPER"); // bukan "Member"
   const [loading, setLoading] = useState(false);
 
   const submit = async () => {
@@ -58,14 +58,14 @@ const AddMemberModal: FC<Props> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent>
+      <DialogContent className="bg-black/80 backdrop-blur-xl border border-white/10 text-white">
         <DialogHeader>
           <DialogTitle>Add Member</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-3">
           <div>
-            <label>User</label>
+            <label className="text-sm text-gray-300">User</label>
             <Select value={selectedUserId} onValueChange={setSelectedUserId}>
               <SelectTrigger>
                 <SelectValue placeholder="Select user" />
@@ -87,14 +87,17 @@ const AddMemberModal: FC<Props> = ({
           </div>
 
           <div>
-            <label>Role</label>
+            <label className="text-sm text-gray-300">Role</label>
             <Select value={role} onValueChange={setRole}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Admin">Admin</SelectItem>
-                <SelectItem value="Member">Member</SelectItem>
+              <SelectItem value="PM">PM</SelectItem>
+              <SelectItem value="DEVELOPER">DEVELOPER</SelectItem>
+              <SelectItem value="QA">QA</SelectItem>
+              <SelectItem value="UIUX">UIUX</SelectItem>
+              <SelectItem value="DEVOPS">DEVOPS</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -104,7 +107,11 @@ const AddMemberModal: FC<Props> = ({
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={submit} disabled={loading}>
+          <Button
+            onClick={submit}
+            disabled={loading}
+            className="bg-red-600 hover:bg-red-700 text-white"
+          >
             {loading ? "Adding..." : "Add"}
           </Button>
         </DialogFooter>

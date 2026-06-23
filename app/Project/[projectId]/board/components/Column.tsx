@@ -1,16 +1,19 @@
+// Project/[projectId]/board/components/Column.tsx
 "use client";
 
 import React, { useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
 import CardItem from "./CardItem";
-import { Pencil, Trash2, Clock3, CheckCircle2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { ColumnType, CardType } from "../hooks/useKanban";
-import { Button } from "@/components/ui/button";
+import { Member } from "../../team/hooks/useProjectMembers";
 
 type Props = {
   column: ColumnType;
   isAdmin?: boolean;
+  currentUserId?: string;
+  members?: Member[];
   onAddCard: (columnId: string, title: string) => void;
   onDeleteColumn: (id: string) => void;
   onEditColumnTitle: (id: string, title: string) => void;
@@ -18,14 +21,16 @@ type Props = {
   onDeleteCard: (columnId: string, cardId: string) => void;
 };
 
+const typeConfig: Record<string, { dot: string; text: string }> = {
+  todo:        { dot: "#6b7280", text: "#9ca3af" },
+  in_progress: { dot: "#3b82f6", text: "#60a5fa" },
+  done:        { dot: "#22c55e", text: "#4ade80" },
+  other:       { dot: "#f59e0b", text: "#fbbf24" },
+};
+
 export default function Column({
-  column,
-  isAdmin = false,
-  onAddCard,
-  onDeleteColumn,
-  onEditColumnTitle,
-  onOpenCard,
-  onDeleteCard,
+  column, isAdmin = false, currentUserId = "", members = [],
+  onAddCard, onDeleteColumn, onEditColumnTitle, onOpenCard, onDeleteCard,
 }: Props) {
   const { setNodeRef } = useDroppable({ id: column.id });
   const [adding, setAdding] = useState(false);
@@ -38,72 +43,30 @@ export default function Column({
     setAdding(false);
   };
 
-  // STYLE LOGIC BERDASARKAN NAMA COLUMN
-  const getHeaderStyle = () => {
-    const title = column.title.toLowerCase();
-
-    if (title.includes("to do") || title === "todo") {
-      return {
-        color: "#6b7280", // gray-500
-        icon: null,
-      };
-    }
-
-    if (title.includes("in progress")) {
-      return {
-        color: "#2563eb", // blue-600
-        icon: <Clock3 className="w-4 h-4 text-blue-600" />,
-      };
-    }
-
-    if (title.includes("done")) {
-      return {
-        color: "#059669", // green-600
-        icon: <CheckCircle2 className="w-4 h-4 text-green-600" />,
-      };
-    }
-
-    // default
-    return {
-      color: "#475569", // slate-600
-      icon: null,
-    };
-  };
-
-  const header = getHeaderStyle();
+  const cfg = typeConfig[column.type ?? "other"] ?? typeConfig.other;
 
   return (
-    <div
-      ref={setNodeRef}
-      className="w-[300px] bg-white rounded-2xl shadow-md border border-slate-200 flex flex-col overflow-hidden hover:shadow-lg transition-all duration-200"
-    >
-      {/* Header baru, clean + icon */}
-      <div className="px-4 py-3 flex items-center justify-between bg-white border-b">
-        <div className="flex items-center gap-2">
-          {header.icon}
-          <h3
-            className="text-sm font-semibold tracking-wide"
-            style={{ color: header.color }}
-          >
-            {column.title}
-          </h3>
-        </div>
+    <div ref={setNodeRef}
+      className="w-full rounded-2xl bg-[#111114] border border-white/8 flex flex-col overflow-hidden">
 
+      {/* Header */}
+      <div className="px-4 py-3 flex items-center justify-between border-b border-white/8">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: cfg.dot }} />
+          <h3 className="text-sm font-semibold truncate" style={{ color: cfg.text }}>{column.title}</h3>
+          <span className="text-[10px] text-slate-600 bg-white/5 px-1.5 py-0.5 rounded-full">
+            {column.cards.length}
+          </span>
+        </div>
         {isAdmin && (
-          <div className="flex items-center gap-2">
-            <button
-              title="Edit judul"
-              onClick={() => onEditColumnTitle(column.id, column.title)}
-              className="p-1 rounded hover:bg-slate-100 transition"
-            >
-              <Pencil className="w-4 h-4 text-slate-500" />
+          <div className="flex items-center gap-1">
+            <button onClick={() => onEditColumnTitle(column.id, column.title)}
+              className="p-1 rounded-lg hover:bg-white/8 transition text-slate-600 hover:text-slate-300">
+              <Pencil className="w-3.5 h-3.5" />
             </button>
-            <button
-              title="Hapus kolom"
-              onClick={() => onDeleteColumn(column.id)}
-              className="p-1 rounded hover:bg-slate-100 transition"
-            >
-              <Trash2 className="w-4 h-4 text-red-500" />
+            <button onClick={() => onDeleteColumn(column.id)}
+              className="p-1 rounded-lg hover:bg-red-500/10 transition text-slate-600 hover:text-red-400">
+              <Trash2 className="w-3.5 h-3.5" />
             </button>
           </div>
         )}
@@ -111,54 +74,51 @@ export default function Column({
 
       {/* Cards */}
       <SortableContext items={column.cards.map((c) => c.id)} strategy={rectSortingStrategy}>
-        <div className="p-4 space-y-3 min-h-[80px] bg-slate-50">
-          {column.cards.map((card) => (
-            <CardItem
-              key={card.id}
-              id={card.id}
-              card={card}
-              isAdmin={isAdmin}
-              onOpen={onOpenCard}
-              onDelete={(cardId) => onDeleteCard(column.id, cardId)}
-            />
-          ))}
+        <div className="p-3 space-y-2 min-h-[60px] flex-1">
+          {column.cards.map((card) => {
+            const isAssignee = (card.assignees ?? []).includes(currentUserId);
+            const canDrag = isAdmin || isAssignee;
+            return (
+              <CardItem
+                key={card.id}
+                id={card.id}
+                card={card}
+                isAdmin={isAdmin}
+                canDrag={canDrag}
+                members={members}
+                onOpen={onOpenCard}
+                onDelete={(cardId) => onDeleteCard(column.id, cardId)}
+              />
+            );
+          })}
         </div>
       </SortableContext>
 
       {/* Add Card */}
       {isAdmin && (
-        <div className="p-4 border-t bg-white">
+        <div className="p-3 border-t border-white/8">
           {adding ? (
             <div className="flex flex-col gap-2">
-              <input
-                value={newCardTitle}
-                onChange={(e) => setNewCardTitle(e.target.value)}
+              <input autoFocus value={newCardTitle} onChange={(e) => setNewCardTitle(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") handleAddCard(); if (e.key === "Escape") { setAdding(false); setNewCardTitle(""); } }}
                 placeholder="Judul tugas..."
-                className="px-3 py-2 w-full rounded border focus:ring-2 focus:ring-blue-300"
-              />
+                className="px-3 py-2 w-full rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-red-500/40" />
               <div className="flex gap-2">
-                <Button onClick={handleAddCard} className="w-full">
+                <button onClick={handleAddCard}
+                  className="flex-1 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition">
                   Tambah
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setAdding(false);
-                    setNewCardTitle("");
-                  }}
-                  className="w-full"
-                >
+                </button>
+                <button onClick={() => { setAdding(false); setNewCardTitle(""); }}
+                  className="flex-1 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 text-xs font-medium transition">
                   Batal
-                </Button>
+                </button>
               </div>
             </div>
           ) : (
-            <Button
-              onClick={() => setAdding(true)}
-              className="w-full bg-slate-100 text-slate-700 hover:bg-slate-200"
-            >
+            <button onClick={() => setAdding(true)}
+              className="w-full py-2 rounded-xl border border-dashed border-white/10 text-slate-600 hover:border-white/20 hover:text-slate-400 text-xs font-medium transition">
               + Add Task
-            </Button>
+            </button>
           )}
         </div>
       )}

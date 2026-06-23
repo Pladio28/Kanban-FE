@@ -29,13 +29,17 @@ const MemberCard: FC<Props> = ({ member, onDelete, isAdmin }) => {
   const canDelete = isAdmin && !member.isSelf; // 🔥 ADMIN GA BISA HAPUS DIRI SENDIRI
 
   return (
-    <div
-      className={cn(
-        "group relative bg-[#0f172a] border border-white/10 rounded-xl p-5 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/20 hover:border-blue-500/40 hover:scale-[1.03] flex flex-col justify-between min-h-[220px]"
-      )}
-    >
+      <div
+        className={cn(
+          "group relative bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-5",
+          "transition-all duration-300",
+          "hover:shadow-xl hover:shadow-red-500/20",
+          "hover:border-red-500/40 hover:scale-[1.03]",
+          "flex flex-col justify-between min-h-[220px]"
+        )}
+      >
       <div className="flex flex-col items-center text-center mb-4">
-        <Avatar className="w-16 h-16 transition-all group-hover:scale-110">
+        <Avatar className="w-16 h-16 ring-2 ring-red-500/30">
           <AvatarImage
             src={`https://api.dicebear.com/7.x/initials/svg?seed=${member.name}`}
           />
@@ -53,9 +57,9 @@ const MemberCard: FC<Props> = ({ member, onDelete, isAdmin }) => {
         <div className="flex justify-center opacity-0 group-hover:opacity-100 transition-all">
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button size="sm" variant="destructive">
-                Delete
-              </Button>
+            <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white">
+              Delete
+            </Button>
             </AlertDialogTrigger>
 
             <AlertDialogContent>

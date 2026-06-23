@@ -1,10 +1,10 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { ClerkProvider } from '@clerk/nextjs'
+import { Toaster } from 'sonner'
 
 import Header from '@/components/header'
 import Footer from '@/components/footer'
-import { ThemeProvider } from '@/components/theme-provider'
 
 import './globals.css'
 
@@ -21,25 +21,40 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <ClerkProvider>
+    <ClerkProvider afterSignOutUrl="/">
       <html
         lang="en"
         data-scroll-behavior="smooth"
         className="antialiased"
-        suppressHydrationWarning
       >
+        <body className={`flex min-h-screen flex-col bg-black text-white ${inter.className}`}>
+          <div className="relative min-h-screen overflow-hidden">
 
-        <body className={`flex min-h-screen flex-col ${inter.className}`}>
-          <ThemeProvider
-            enableSystem
-            attribute='class'
-            defaultTheme='system'
-            disableTransitionOnChange
-          >
-            <Header />
-            <main className='grow'>{children}</main>
-            <Footer />
-          </ThemeProvider>
+            {/* GLOW MERAH */}
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-red-600 rounded-full blur-[120px] opacity-30"></div>
+
+            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-red-800 rounded-full blur-[120px] opacity-20"></div>
+
+            <div className="relative z-10 flex flex-col min-h-screen">
+              <Header />
+              <main className='grow'>{children}</main>
+              <Footer />
+            </div>
+
+          </div>
+
+          <Toaster
+            position="top-right"
+            richColors
+            theme="dark"
+            toastOptions={{
+              style: {
+                background: '#1a1a20',
+                border: '1px solid rgba(255,255,255,0.1)',
+                color: '#f8fafc',
+              },
+            }}
+          />
         </body>
       </html>
     </ClerkProvider>

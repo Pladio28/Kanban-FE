@@ -1,46 +1,50 @@
+// components/header.tsx
 "use client";
 
 import Link from "next/link";
 import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
-
 import { Button } from "@/components/ui/button";
-import { ClientOnly } from "./client-only"; // wrapper
-import { ThemeToggle }from "@/components/theme-toggle";
 
 export default function Header() {
   return (
-    <header className="py-4">
-      <nav className="container flex items-center justify-between">
-        <ul className="flex gap-10 text-sm font-medium">
-          <li>
-            <Link href="/">Home</Link>
-          </li>
+    <header className="fixed top-0 left-0 w-full z-50 backdrop-blur-xl bg-black/40 border-b border-white/10 shadow-lg shadow-black/20 before:absolute before:inset-0 before:bg-gradient-to-r before:from-red-500/10 before:to-transparent before:pointer-events-none">
+      <nav className="container flex items-center justify-between py-4">
 
+        {/* LEFT */}
+        <ul className="flex items-center gap-8 text-sm font-medium text-gray-300">
+          <li className="text-lg font-bold tracking-tight">
+            <Link href="/" className="flex items-center gap-1">
+              <span className="text-white">Kanban</span>
+              <span className="text-red-500">Flow</span>
+            </Link>
+          </li>
+          <li>
+            <Link href="/" className="hover:text-red-500 transition">Home</Link>
+          </li>
           <SignedIn>
             <li>
-              <Link href="/Project">Project</Link>
+              <Link href="/Project" className="hover:text-red-500 transition">Project</Link>
             </li>
           </SignedIn>
-
           <li>
-            <Link href="/about">About</Link>
+            <Link href="/about" className="hover:text-red-500 transition">About</Link>
           </li>
         </ul>
 
-        <div className="flex items-center justify-between gap-6">
-          {/* Bungkus ThemeToggle supaya tidak menyebabkan hydration error */}
-          <ClientOnly>
-            <ThemeToggle />
-          </ClientOnly>
-
+        {/* RIGHT */}
+        <div className="flex items-center gap-3">
           <SignedOut>
             <SignInButton mode="modal">
-              <Button size="sm">Sign in</Button>
+              <Button size="sm" className="rounded-lg bg-red-600 hover:bg-red-700 text-white shadow-md shadow-red-600/30">
+                Sign in
+              </Button>
             </SignInButton>
           </SignedOut>
 
           <SignedIn>
-            <UserButton />
+            <div className="scale-90 hover:scale-100 transition duration-200">
+              <UserButton />
+            </div>
           </SignedIn>
         </div>
       </nav>

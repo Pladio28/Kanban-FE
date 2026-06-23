@@ -1,3 +1,4 @@
+// app/Project/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -6,29 +7,15 @@ import { Project } from "@/types/project";
 import ProjectCard from "./components/ProjectCard";
 import ProjectModal from "./components/ProjectModal";
 import { Button } from "@/components/ui/button";
-
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogCancel,
-  AlertDialogAction,
-} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 export default function DashboardPage() {
-  const { getProjects, addProject, updateProject, deleteProject } =
-    useProjectsApi();
-
+  const { getProjects, addProject, updateProject, deleteProject } = useProjectsApi();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
-
   const [modalOpen, setModalOpen] = useState(false);
   const [modalPayload, setModalPayload] = useState<Project | null>(null);
-
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     async function fetchProjects() {
@@ -37,6 +24,7 @@ export default function DashboardPage() {
         setProjects(data);
       } catch (err) {
         console.error("Failed to fetch projects:", err);
+        toast.error("Gagal memuat daftar project");
       } finally {
         setLoading(false);
       }
@@ -55,21 +43,28 @@ export default function DashboardPage() {
   };
 
   const handleSave = async (project: Project) => {
+    const isEdit = !!(project.id && projects.find((p) => p.id === project.id));
     try {
-      if (project.id && projects.find((p) => p.id === project.id)) {
-        const updated = await updateProject(project.id, project);
-        setProjects((prev) =>
-          prev.map((p) => (p.id === updated.id ? updated : p))
-        );
+      if (isEdit) {
+        const updated = await updateProject(project.id, {
+          name: project.name,
+          description: project.description,
+          deadline: project.deadline ?? null,
+        });
+        setProjects((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+        toast.success("Project berhasil diperbarui");
       } else {
         const added = await addProject({
           name: project.name,
           description: project.description,
+          deadline: project.deadline ?? null,
         });
         setProjects((prev) => [...prev, added]);
+        toast.success("Project berhasil dibuat");
       }
     } catch (err) {
       console.error("Failed to save project:", err);
+      toast.error(isEdit ? "Gagal memperbarui project" : "Gagal membuat project");
     }
     closeModal();
   };
@@ -78,78 +73,73 @@ export default function DashboardPage() {
     try {
       await deleteProject(id);
       setProjects((prev) => prev.filter((p) => p.id !== id));
+      toast.success("Project berhasil dihapus");
     } catch (err) {
       console.error("Failed to delete project:", err);
+      toast.error("Gagal menghapus project");
     }
   };
 
+  const filteredProjects = projects.filter((project) => {
+    const keyword = search.toLowerCase();
+    return (
+      project.name.toLowerCase().includes(keyword) ||
+      project.description.toLowerCase().includes(keyword)
+    );
+  });
+
   return (
-    <main className="p-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Daftar Project</h1>
-        <Button
-          onClick={() => openModal()}
-          className="bg-teal-700 hover:bg-teal-800"
-        >
-          + New Project
-        </Button>
+    <main className="p-8 pt-28 text-white">
+
+      {/* HEADER */}
+      <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
+        <h1 className="text-3xl md:text-4xl font-bold">
+          Daftar <span className="text-red-500">Project</span>
+        </h1>
+
+        <div className="flex gap-3 w-full md:w-auto">
+          <input
+            type="text"
+            placeholder="Cari project..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full md:w-64 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500/50"
+          />
+          <Button
+            onClick={() => openModal()}
+            className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-xl shadow-lg shadow-red-600/30 hover:scale-105 transition whitespace-nowrap"
+          >
+            + New Project
+          </Button>
+        </div>
       </div>
 
+      {/* CONTENT */}
       {loading ? (
-        <p>Loading...</p>
-      ) : projects.length === 0 ? (
-        <p>Belum ada project.</p>
+        <p className="text-gray-400 animate-pulse">Loading...</p>
+      ) : filteredProjects.length === 0 ? (
+        <p className="text-gray-400">Project tidak ditemukan.</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {projects.map((project) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredProjects.map((project) => (
             <ProjectCard
               key={project.id}
               project={project}
               onEdit={() => openModal(project)}
-              onDelete={() => setDeleteId(project.id)}
+              onDelete={() => handleDelete(project.id)}
             />
           ))}
         </div>
       )}
 
-      {/* MODAL ADD / EDIT */}
-      <ProjectModal
-        open={modalOpen}
-        payload={modalPayload}
-        onClose={closeModal}
-        onSave={handleSave}
-      />
-
-      {/* POPUP CONFIRM DELETE */}
-      <AlertDialog
-        open={!!deleteId}
-        onOpenChange={(v) => !v && setDeleteId(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Hapus Project?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Project yang dihapus tidak bisa dikembalikan.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDeleteId(null)}>
-              Batal
-            </AlertDialogCancel>
-
-            <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700"
-              onClick={() => {
-                if (deleteId) handleDelete(deleteId);
-                setDeleteId(null);
-              }}
-            >
-              Ya, Hapus
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {modalOpen && (
+        <ProjectModal
+          open={modalOpen}
+          payload={modalPayload}
+          onClose={closeModal}
+          onSave={handleSave}
+        />
+      )}
     </main>
   );
 }

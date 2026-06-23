@@ -8,9 +8,14 @@ export default function ProjectPage() {
   const { projectId } = useParams();
 
   useEffect(() => {
-    router.replace(`/Project/${projectId}/board`);
+    if (projectId) {
+      router.replace(`/Project/${projectId}/board`);
+    }
   }, [projectId, router]);
 
-  return <div className="text-white">Loading...</div>;
-  
+  return (
+    <div className="flex items-center justify-center min-h-screen text-gray-400 animate-pulse">
+      Loading project...
+    </div>
+  );
 }

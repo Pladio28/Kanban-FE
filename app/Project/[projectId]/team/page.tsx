@@ -19,21 +19,33 @@ export default function TeamPage() {
   const [isAddOpen, setAddOpen] = React.useState(false);
 
   const currentUser = members.find((m) => m.isSelf);
-  const isAdmin = currentUser?.role?.toLowerCase() === "admin"; // 🔥 FIX
+  const isAdmin = currentUser?.role === "PM";
 
   return (
-    <main className="min-h-screen p-6">
-      <div className="max-w-[1000px] mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">Team Members</h1>
-
+    <main className="min-h-screen p-6 text-white">
+      <div className="max-w-[1100px] mx-auto">
+      
+        {/* HEADER */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold">Team Members</h1>
+            <p className="text-gray-400 text-sm mt-1">
+              Manage your team and collaboration
+            </p>
+          </div>
+      
           {isAdmin && (
-            <Button onClick={() => setAddOpen(true)}>Add Member</Button>
+            <Button className="bg-red-600 hover:bg-red-700 shadow-lg shadow-red-600/30"
+              onClick={() => setAddOpen(true)}
+            >
+              + Add Member
+            </Button>
           )}
         </div>
-
+        
+        {/* CONTENT */}
         {loading ? (
-          <p className="text-slate-400">Loading members...</p>
+          <p className="text-gray-400 animate-pulse">Loading members...</p>
         ) : (
           <TeamList
             members={members}
@@ -41,16 +53,17 @@ export default function TeamPage() {
             isAdmin={isAdmin}
           />
         )}
-
-        <AddMemberModal
-          isOpen={isAdmin && isAddOpen}
-          onClose={() => setAddOpen(false)}
-          onAddMember={async (clerk_user_id, role) =>
-            await addMember(clerk_user_id, role)
-          }
-          users={users}
-          isAdmin={isAdmin}
-        />
+    
+        {/* MODAL */}
+        {isAdmin && (
+          <AddMemberModal
+            isOpen={isAddOpen}
+            onClose={() => setAddOpen(false)}
+            onAddMember={addMember}
+            users={users}
+          />
+        )}
+    
       </div>
     </main>
   );
