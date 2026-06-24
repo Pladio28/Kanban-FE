@@ -1,8 +1,13 @@
+"use client";
+
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { useUser } from "@clerk/nextjs";
 
 export default function Home() {
+  const { isSignedIn } = useUser();
+
   return (
     <main className="pt-24 text-white">
 
@@ -29,11 +34,19 @@ export default function Home() {
             </p>
 
             <div className="flex flex-wrap gap-4">
-              <Link href="/sign-in/sign-up">
-                <Button className="bg-red-600 hover:bg-red-700 text-white px-8 py-6 rounded-xl text-lg shadow-lg shadow-red-600/30 transition hover:scale-105">
-                  MULAI
-                </Button>
-              </Link>
+              {isSignedIn ? (
+                <Link href="/Project">
+                  <Button className="bg-red-600 hover:bg-red-700 text-white px-8 py-6 rounded-xl text-lg shadow-lg shadow-red-600/30 transition hover:scale-105">
+                    Buka Project
+                  </Button>
+                </Link>
+              ) : (
+                <Link href="/sign-in/sign-up">
+                  <Button className="bg-red-600 hover:bg-red-700 text-white px-8 py-6 rounded-xl text-lg shadow-lg shadow-red-600/30 transition hover:scale-105">
+                    MULAI
+                  </Button>
+                </Link>
+              )}
 
               <Button
                 variant="outline"
@@ -51,7 +64,6 @@ export default function Home() {
           {/* KANAN */}
           <div className="w-full md:w-1/2 relative">
             <div className="absolute -inset-4 bg-red-600/20 blur-3xl rounded-full"></div>
-
             <img
               src="/Kanban.png"
               alt="Preview Kanban"
@@ -97,35 +109,36 @@ export default function Home() {
               className="group rounded-3xl border border-white/10 bg-white/5 backdrop-blur-md p-8 transition duration-300 hover:-translate-y-2 hover:border-red-500/30 hover:bg-white/10"
             >
               <div className="mb-5 text-5xl">{item.icon}</div>
-          
-              <h3 className="text-xl font-semibold mb-3 text-white">
-                {item.title}
-              </h3>
-          
-              <p className="text-gray-300 leading-7">
-                {item.text}
-              </p>
+              <h3 className="text-xl font-semibold mb-3 text-white">{item.title}</h3>
+              <p className="text-gray-300 leading-7">{item.text}</p>
             </div>
           ))}
         </div>
-        
+
         <div className="text-center mt-14">
-          <Link href="/sign-in/sign-up">
-            <Button className="bg-red-600 hover:bg-red-700 text-white px-8 py-6 rounded-xl text-lg shadow-lg shadow-red-600/30 hover:scale-105 transition">
-              Daftar Gratis
-            </Button>
-          </Link>
+          {isSignedIn ? (
+            <Link href="/Project">
+              <Button className="bg-red-600 hover:bg-red-700 text-white px-8 py-6 rounded-xl text-lg shadow-lg shadow-red-600/30 hover:scale-105 transition">
+                Buka Project
+              </Button>
+            </Link>
+          ) : (
+            <Link href="/sign-in/sign-up">
+              <Button className="bg-red-600 hover:bg-red-700 text-white px-8 py-6 rounded-xl text-lg shadow-lg shadow-red-600/30 hover:scale-105 transition">
+                Daftar Gratis
+              </Button>
+            </Link>
+          )}
         </div>
       </section>
-        
+
       {/* SECTION 3 */}
       <section className="py-24">
         <div className="container mx-auto text-center px-6">
-        
           <h2 className="text-3xl md:text-4xl font-bold mb-14">
             Tim di balik <span className="text-red-500">Project Bye</span>
           </h2>
-        
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-3xl mx-auto">
             {[
               { name: "Pladio.M", image: "/Me.jpg" },
@@ -140,14 +153,8 @@ export default function Home() {
                   alt={member.name}
                   className="mx-auto mb-5 h-32 w-32 rounded-full object-cover border-4 border-red-500/20 shadow-lg shadow-red-900/20"
                 />
-
-                <h3 className="text-xl font-semibold text-white">
-                  {member.name}
-                </h3>
-            
-                <p className="mt-2 text-sm text-gray-400">
-                  Developer
-                </p>
+                <h3 className="text-xl font-semibold text-white">{member.name}</h3>
+                <p className="mt-2 text-sm text-gray-400">Developer</p>
               </div>
             ))}
           </div>
