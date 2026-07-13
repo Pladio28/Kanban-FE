@@ -22,8 +22,8 @@ const formatRelative = (iso: string) => {
 };
 
 const notifIcon = (type: string) => {
-  if (type === "ASSIGN_USER") return "🔔";
-  if (type === "UPLOAD_ATTACHMENT") return "📎";
+  if (type === "ASSIGN") return "🔔";
+  if (type === "ATTACHMENT") return "📎";
   if (type === "CREATE_CARD") return "➕";
   if (type === "UPDATE_CARD") return "✏️";
   if (type === "DELETE_CARD") return "🗑️";
