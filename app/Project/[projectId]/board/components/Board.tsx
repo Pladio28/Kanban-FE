@@ -97,7 +97,7 @@ export default function Board({ projectId }: Props) {
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-white tracking-tight">🚀 Kanban Board</h1>
+          <h1 className="text-xl font-bold text-white tracking-tight">Meteor flow</h1>
           <p className="text-xs text-slate-500 mt-0.5">{columns.length} kolom · {totalCards} task</p>
         </div>
         <div className="flex items-center gap-2">

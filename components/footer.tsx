@@ -3,7 +3,7 @@ export default function Footer() {
     <footer className='py-4'>
       <div className='container'>
         <p className='text-center text-sm text-white'>
-          &copy; {new Date().getFullYear()} Project Kanban 
+          &copy; {new Date().getFullYear()} Meteor Flow
         </p>
       </div>
     </footer>

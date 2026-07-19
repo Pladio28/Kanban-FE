@@ -17,18 +17,14 @@ export default function Home() {
 
           {/* KIRI */}
           <div className="max-w-2xl">
-            <span className="inline-flex items-center rounded-full border border-red-500/30 bg-red-500/10 px-4 py-1 text-sm font-medium text-red-300 backdrop-blur-md mb-6">
-              🚀 Alternatif Kanban #1
-            </span>
-
             <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-6">
               Lihat mengapa tim memilih{" "}
-              <span className="text-red-500">Kanban kami</span>{" "}
+              <span className="text-red-500">Metor Flow</span>{" "}
               daripada yang lain.
             </h1>
 
             <p className="text-lg text-gray-300 leading-8 mb-8 max-w-xl">
-              Kanban board kami fleksibel, user-friendly, dan sangat mudah
+              Meteor flow kami fleksibel, user-friendly, dan sangat mudah
               disesuaikan. Cocok untuk tim yang membutuhkan visual planning
               dengan kontrol penuh.
             </p>
@@ -65,8 +61,8 @@ export default function Home() {
           <div className="w-full md:w-1/2 relative">
             <div className="absolute -inset-4 bg-red-600/20 blur-3xl rounded-full"></div>
             <img
-              src="/Kanban.png"
-              alt="Preview Kanban"
+              src="/MeteorFlow.png"
+              alt="Preview"
               className="relative rounded-3xl border border-white/10 shadow-2xl shadow-red-900/30"
             />
           </div>
@@ -77,11 +73,11 @@ export default function Home() {
       <section className="py-24">
         <div className="container mx-auto text-center max-w-3xl px-6">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Buat papan Kanban dengan cepat
+            Buat Pekerjaan dengan cepat
           </h2>
 
           <p className="text-gray-300 text-lg leading-8 mb-14">
-            Papan Kanban gratis dari kami fleksibel, mudah disesuaikan, dan
+            Meteor flow gratis dari kami fleksibel, mudah disesuaikan, dan
             membantu tim Anda menyelesaikan project dengan lebih cepat dan rapi.
           </p>
         </div>
@@ -141,7 +137,7 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-3xl mx-auto">
             {[
-              { name: "Pladio.M", image: "/Me.jpg" },
+              { name: "Pladio.M", image: "/Pladio.png" },
               { name: "Akmal", image: "/akmal.enc" },
             ].map((member, i) => (
               <div

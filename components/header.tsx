@@ -14,7 +14,7 @@ export default function Header() {
         <ul className="flex items-center gap-8 text-sm font-medium text-gray-300">
           <li className="text-lg font-bold tracking-tight">
             <Link href="/" className="flex items-center gap-1">
-              <span className="text-white">Kanban</span>
+              <span className="text-white">Meteor</span>
               <span className="text-red-500">Flow</span>
             </Link>
           </li>

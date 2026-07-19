@@ -25,11 +25,11 @@ export default function AboutPage() {
       <section className="py-24 px-6 md:px-20 text-center">
         <div className="max-w-3xl mx-auto">
           <h1 className="text-4xl md:text-5xl font-bold mb-6">
-            Tentang <span className="text-red-500">Project Kanban</span>
+            Tentang <span className="text-red-500">Meteor flow</span>
           </h1>
 
           <p className="text-lg text-gray-300 leading-relaxed mb-10">
-            Project Kanban adalah aplikasi manajemen tugas modern yang dirancang
+            Meteor flow adalah aplikasi manajemen tugas modern yang dirancang
             untuk meningkatkan produktivitas dan kolaborasi tim Anda.
             Cepat, intuitif, dan sepenuhnya fleksibel.
           </p>
