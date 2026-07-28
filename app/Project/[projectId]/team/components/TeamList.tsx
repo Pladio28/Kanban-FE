@@ -30,6 +30,7 @@ const TeamList: FC<TeamListProps> = ({ members, onDeleteMember, isAdmin }) => {
         />
       ))}
     </div>
+    
   );
 };
 

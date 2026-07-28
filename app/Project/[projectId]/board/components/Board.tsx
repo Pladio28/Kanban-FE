@@ -17,6 +17,9 @@ import BoardActivitySidebar from "./BoardActivitySidebar";
 import { useKanban, CardType } from "../hooks/useKanban";
 import { Button } from "@/components/ui/button";
 import { useProjectMembers } from "../../team/hooks/useProjectMembers";
+import { Input } from "@/components/ui/input";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+
 
 type Props = { projectId?: string };
 
@@ -29,6 +32,8 @@ export default function Board({ projectId }: Props) {
   const [refreshKey, setRefreshKey] = useState(0);
   const triggerRefresh = () => setRefreshKey((k) => k + 1);
   const [showSidebar, setShowSidebar] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterAssignee, setFilterAssignee] = useState("all"); // "all" atau clerk_user_id
 
   const { columns, addColumn, addCard, updateCard, deleteCard, renameColumn, deleteColumn, moveCard } =
     useKanban(projectId, Boolean(isAdmin));
@@ -92,6 +97,15 @@ export default function Board({ projectId }: Props) {
   };
 
   const totalCards = columns.reduce((a, c) => a + c.cards.length, 0);
+  const filteredColumns = columns.map((col) => ({
+    ...col,
+    cards: col.cards.filter((card) => {
+      const matchesSearch = card.title.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesAssignee =
+        filterAssignee === "all" || (card.assignees ?? []).includes(filterAssignee);
+      return matchesSearch && matchesAssignee;
+    }),
+  }));
 
   return (
     <div className="flex flex-col gap-5">
@@ -101,6 +115,27 @@ export default function Board({ projectId }: Props) {
           <p className="text-xs text-slate-500 mt-0.5">{columns.length} kolom · {totalCards} task</p>
         </div>
         <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
+            <Input
+              placeholder="Cari task..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="max-w-[220px] bg-white/5 border-white/10 text-white text-sm"
+            />
+            <Select value={filterAssignee} onValueChange={setFilterAssignee}>
+              <SelectTrigger className="w-[160px] bg-white/5 border-white/10 text-white text-sm">
+                <SelectValue placeholder="Semua Anggota" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Anggota</SelectItem>
+                {members.map((m) => (
+                  <SelectItem key={m.clerk_user_id} value={m.clerk_user_id}>
+                    {m.name ?? m.clerk_user_id}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <button onClick={() => setShowSidebar((v) => !v)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
               showSidebar ? "bg-white/10 border-white/20 text-white" : "bg-white/5 border-white/10 text-slate-400 hover:text-white hover:border-white/20"
@@ -122,7 +157,7 @@ export default function Board({ projectId }: Props) {
         <div className="flex-1 min-w-0 overflow-x-auto pb-2 [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.1)_transparent]">
           <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragStart={onDragStart} onDragEnd={onDragEnd}>
             <div className="flex gap-4 w-max">
-              {columns.map((col) => (
+              {filteredColumns.map((col) => (
                 <div key={col.id} className="w-[270px] flex-shrink-0">
                   <Column
                     column={col}

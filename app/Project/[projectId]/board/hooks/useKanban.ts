@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react"; // ← tambah useRef
+import { supabase } from "@/lib/supabaseClient"; // ← tambah baris ini
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "sonner";
 import { useBoardsApi } from "@/lib/api/boards";
@@ -33,81 +34,111 @@ export const useKanban = (projectId?: string, isAdmin: boolean = false) => {
   const columnsApi = useColumnsApi();
   const cardsApi = useCardsApi();
 
+  // ⬇️ PINDAH KE SINI (sebelumnya nempel di dalam useEffect di bawah)
+  const fetchAll = async () => {
+    if (!projectId) return;
+    try {
+      const boards = await boardsApi.getBoardsByProject(projectId);
+      let bId: string | null = boards?.[0]?.id ?? null;
+
+      if (!bId) {
+        const created = await boardsApi.createBoard(projectId, "Board");
+        bId = created?.id ?? null;
+      }
+
+      setBoardId(bId);
+      if (!bId) return;
+
+      const fetchedColumns = await columnsApi.getColumns(bId);
+
+      const cardsList = await Promise.all(
+        (fetchedColumns ?? []).map((col: any) =>
+          cardsApi.getCardsByColumn(col.id).catch(() => [])
+        )
+      );
+
+      const allCards = (fetchedColumns ?? []).flatMap(
+        (_: any, idx: number) => cardsList[idx] ?? []
+      );
+
+      const assigneeLists = await Promise.all(
+        allCards.map((card: any) =>
+          cardsApi.getCardMembers(card.id)
+            .then((members: any[]) => members.map((m) => m.clerk_user_id))
+            .catch(() => [] as string[])
+        )
+      );
+
+      let cardOffset = 0;
+      const mappedColumns: ColumnType[] = (fetchedColumns ?? []).map(
+        (col: any, idx: number) => {
+          const cards = (cardsList[idx] ?? []).map((t: any) => {
+            const assignees = assigneeLists[cardOffset++] ?? [];
+            return {
+              id: t.id,
+              title: t.title,
+              description: t.description,
+              dueDate: t.due_date ?? null,
+              progress: t.progress ?? 0,
+              assignees,
+            };
+          });
+          return { id: col.id, title: col.name ?? col.title, type: col.type ?? "other", cards };
+        }
+      );
+
+      setColumns(mappedColumns);
+    } catch (err) {
+      console.error("useKanban fetch error:", err);
+    }
+  };
+
+  // ⬇️ SEKARANG CUMA MANGGIL fetchAll()
   useEffect(() => {
     if (!projectId) return;
-    let mounted = true;
-
-    const fetchAll = async () => {
-      try {
-        const boards = await boardsApi.getBoardsByProject(projectId);
-        let bId: string | null = boards?.[0]?.id ?? null;
-
-        if (!bId) {
-          const created = await boardsApi.createBoard(projectId, "Board");
-          bId = created?.id ?? null;
-        }
-
-        if (!mounted) return;
-        setBoardId(bId);
-        if (!bId) return;
-
-        const fetchedColumns = await columnsApi.getColumns(bId);
-
-        const cardsList = await Promise.all(
-          (fetchedColumns ?? []).map((col: any) =>
-            cardsApi.getCardsByColumn(col.id).catch(() => [])
-          )
-        );
-
-        // Flatten semua cards untuk batch-fetch assignees
-        const allCards = (fetchedColumns ?? []).flatMap(
-          (_: any, idx: number) => cardsList[idx] ?? []
-        );
-
-        const assigneeLists = await Promise.all(
-          allCards.map((card: any) =>
-            cardsApi.getCardMembers(card.id)
-              .then((members: any[]) => members.map((m) => m.clerk_user_id))
-              .catch(() => [] as string[])
-          )
-        );
-
-        // Map assignees ke masing-masing card
-        let cardOffset = 0;
-        const mappedColumns: ColumnType[] = (fetchedColumns ?? []).map(
-          (col: any, idx: number) => {
-            const cards = (cardsList[idx] ?? []).map((t: any) => {
-              const assignees = assigneeLists[cardOffset++] ?? [];
-              return {
-                id: t.id,
-                title: t.title,
-                description: t.description,
-                dueDate: t.due_date ?? null,
-                progress: t.progress ?? 0,
-                assignees,
-              };
-            });
-            return { id: col.id, title: col.name ?? col.title, type: col.type ?? "other", cards };
-          }
-        );
-
-        if (!mounted) return;
-        setColumns(mappedColumns);
-      } catch (err) {
-        console.error("useKanban fetch error:", err);
-      }
-    };
-
     fetchAll();
-    return () => { mounted = false; };
   }, [projectId]);
 
-  const adminOnly = <T extends (...args: any[]) => any>(fn: T) => {
-    return ((...args: any[]) => {
-      if (!isAdmin) { console.warn("Aksi ini hanya untuk admin"); return; }
-      return (fn as any)(...args);
-    }) as unknown as T;
-  };
+  // Ref buat nyimpen state `columns` terkini, dipakai di dalam handler realtime
+  const columnsRef = useRef<ColumnType[]>([]);
+  useEffect(() => {
+    columnsRef.current = columns;
+  }, [columns]);
+  
+  // Subscribe ke perubahan real-time
+  useEffect(() => {
+    if (!boardId) return;
+  
+    const channel = supabase
+      .channel(`board-${boardId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "columns", filter: `boards_id=eq.${boardId}` },
+        () => fetchAll()
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "cards" },
+        (payload) => {
+          const changedColumnId =
+            (payload.new as any)?.columns_id ?? (payload.old as any)?.columns_id;
+          const belongsToThisBoard = columnsRef.current.some((c) => c.id === changedColumnId);
+          if (belongsToThisBoard) fetchAll();
+        }
+      )
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [boardId]);
+  
+    const adminOnly = <T extends (...args: any[]) => any>(fn: T) => {
+      return ((...args: any[]) => {
+        if (!isAdmin) { console.warn("Aksi ini hanya untuk admin"); return; }
+        return (fn as any)(...args);
+      }) as unknown as T;
+    };
 
   // ─── Columns ─────────────────────────────────────────────────
 

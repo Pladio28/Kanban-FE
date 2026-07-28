@@ -1,20 +1,23 @@
 // app/Project/[projectId]/components/ReportModal.tsx
-"use client";
+"use client"; // Menandai bahwa komponen ini berjalan di Client-side (karena butuh state, dialog DOM, & export PDF)
 
 import { useState, useEffect } from "react";
+// Import komponen Dialog (Modal) dari Radix UI / Shadcn UI
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { FileDown, Loader2, X, Users, BarChart3, Clock } from "lucide-react";
-import { useReportsApi, ProjectReport } from "@/lib/api/reports";
-import { Member } from "../team/hooks/useProjectMembers";
+import { FileDown, Loader2, X, Users, BarChart3, Clock } from "lucide-react"; // Import ikon UI
+import { useReportsApi, ProjectReport } from "@/lib/api/reports"; // Import API khusus report
+import { Member } from "../team/hooks/useProjectMembers"; // Import tipe data Member tim
 
+// Props yang wajib dikirim saat panggil komponen ini
 interface Props {
-  open: boolean;
-  onClose: () => void;
-  projectId: string;
-  members: Member[];
+  open: boolean;         // Control status modal: true (terbuka) | false (tertutup)
+  onClose: () => void;   // Callback function buat nutup modal
+  projectId: string;     // ID project yang mau ditampilin laporannya
+  members: Member[];     // List data anggota tim (buat mapping ID ke Nama Asli)
 }
 
+// Map warna teks berdasarkan tipe status kolom/task
 const typeColor: Record<string, string> = {
   done: "text-green-400",
   in_progress: "text-blue-400",
@@ -22,6 +25,7 @@ const typeColor: Record<string, string> = {
   other: "text-amber-400",
 };
 
+// Map warna Hex untuk keperluan render grafik/PDF
 const typeDot: Record<string, string> = {
   done: "#22c55e",
   in_progress: "#3b82f6",
@@ -35,13 +39,16 @@ export default function ReportModal({
   projectId,
   members,
 }: Props) {
-  const reportsApi = useReportsApi();
-  const [report, setReport] = useState<ProjectReport | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [downloading, setDownloading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const reportsApi = useReportsApi(); // Hook API report
+  const [report, setReport] = useState<ProjectReport | null>(null); // State nampung detail data laporan
+  const [loading, setLoading] = useState(false); // Indicator loading fetching data
+  const [downloading, setDownloading] = useState(false); // Indicator loading generate PDF
+  const [error, setError] = useState<string | null>(null); // State penampung pesan error
 
+  // --- EFFECT: FETCH DATA REPORT ---
+  // Dijalankan setiap kali prop 'open' atau 'projectId' berubah
   useEffect(() => {
+    // Kalau modal ditutup, bersihkan data report lama
     if (!open) {
       setReport(null);
       return;
@@ -50,6 +57,7 @@ export default function ReportModal({
     setLoading(true);
     setError(null);
 
+    // Ambil data laporan project dari backend berdasarkan projectId
     reportsApi
       .getProjectReport(projectId)
       .then(setReport)
@@ -63,17 +71,21 @@ export default function ReportModal({
       .finally(() => setLoading(false));
   }, [open, projectId]);
 
+  // --- HELPER 1: CONVERT USER ID KE NAMA ---
+  // Mengubah Clerk User ID (misal: "user_2x3y...") jadi nama asli dari prop 'members'
   const resolveName = (clerkUserId: string) => {
     const m = members.find((m) => m.clerk_user_id === clerkUserId);
-    return m?.name ?? `User-${clerkUserId.slice(-4)}`;
+    return m?.name ?? `User-${clerkUserId.slice(-4)}`; // Fallback jika nama tidak ditemukan
   };
 
+  // --- HANDLER: GENERATE & DOWNLOAD PDF ---
   const handleDownload = async () => {
     if (!report) return;
 
     setDownloading(true);
 
     try {
+      // Dynamic import jsPDF agar bundle size awal tetap ringan
       const jsPDFModule = await import("jspdf");
       const JsPDF = jsPDFModule.default ?? jsPDFModule.jsPDF;
       const doc = new JsPDF({
@@ -82,22 +94,25 @@ export default function ReportModal({
         format: "a4",
       });
 
-      const W = 210;
+      const W = 210; // Lebar A4 (mm)
       const margin = 20;
-      let y = 20;
+      let y = 20; // Posisi vertical cursor di PDF
 
+      // Helper: Tambah halaman baru jika kursor melampaui batas kertas (280mm)
       const checkNewPage = (needed = 10) => {
         if (y + needed > 280) {
           doc.addPage();
           y = 20;
-          doc.setFillColor(15, 15, 17);
+          doc.setFillColor(15, 15, 17); // Set background gelap halaman baru
           doc.rect(0, 0, W, 297, "F");
         }
       };
 
+      // Set background halaman pertama jadi dark mode
       doc.setFillColor(15, 15, 17);
       doc.rect(0, 0, W, 297, "F");
 
+      // Helper: Gambar garis pembatas warna merah
       const redLine = () => {
         checkNewPage(10);
         doc.setDrawColor(220, 38, 38);
@@ -106,6 +121,7 @@ export default function ReportModal({
         y += 7;
       };
 
+      // Helper: Cetak baris data pasangan (Label : Value)
       const row = (
         label: string,
         value: string,
@@ -126,6 +142,7 @@ export default function ReportModal({
         y += 7;
       };
 
+      // Helper: Cetak judul sub-section berwarna merah
       const sectionTitle = (title: string) => {
         checkNewPage(15);
         doc.setFontSize(13);
@@ -135,7 +152,8 @@ export default function ReportModal({
         y += 9;
       };
 
-      // Title
+      // --- SUSUN ISI PDF ---
+      // Header Utama
       doc.setFontSize(18);
       doc.setFont("helvetica", "bold");
       doc.setTextColor("#ef4444");
@@ -150,7 +168,7 @@ export default function ReportModal({
       y += 12;
       redLine();
 
-      // Info
+      // Info Utama
       row("Nama Project", report.project.name, "#94a3b8", "#ffffff", true);
 
       if (report.project.deadline) {
@@ -167,6 +185,7 @@ export default function ReportModal({
 
       row("Durasi", `${report.duration_days} hari`);
 
+      // Tentukan warna teks persentase
       const pc =
         report.percentage === 100
           ? "#22c55e"
@@ -184,7 +203,7 @@ export default function ReportModal({
       y += 3;
       redLine();
 
-      // Summary
+      // Ringkasan
       sectionTitle("RINGKASAN");
 
       row("Total Komentar", `${report.summary.total_comments}`);
@@ -199,7 +218,7 @@ export default function ReportModal({
       y += 3;
       redLine();
 
-      // TIM
+      // Tim (Menggunakan resolveName agar nama user di PDF sesuai nama asli, bukan ID)
       sectionTitle("TIM");
 
       report.members.forEach((m) => {
@@ -208,7 +227,7 @@ export default function ReportModal({
         const isTop =
           report.top_member?.clerk_user_id === m.clerk_user_id;
 
-        const name = resolveName(m.clerk_user_id);
+        const name = resolveName(m.clerk_user_id); // Resolving nama asli user
 
         doc.setFontSize(10);
         doc.setFont("helvetica", isTop ? "bold" : "normal");
@@ -236,7 +255,7 @@ export default function ReportModal({
       y += 2;
       redLine();
 
-      // Breakdown
+      // Breakdown Status Task
       sectionTitle("BREAKDOWN");
 
       report.breakdown.forEach((b) => {
@@ -250,6 +269,7 @@ export default function ReportModal({
         y += 6;
       });
 
+      // Trigger download file PDF
       doc.save(
         `laporan-${report.project.name.replace(/\s+/g, "-")}.pdf`
       );
@@ -261,16 +281,18 @@ export default function ReportModal({
     }
   };
 
+  // Hitung persentase progress & tentukan warna progress bar UI modal
   const pct = report?.percentage ?? 0;
   const barColor =
     pct === 100 ? "#22c55e" : pct >= 50 ? "#3b82f6" : "#ef4444";
 
   return (
+    // Component Dialog Modal yang dikontrol oleh state 'open'
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-2xl w-full p-0 bg-[#0f0f11] border border-white/10 text-white overflow-hidden rounded-2xl shadow-2xl shadow-black/60 gap-0">
         <DialogTitle className="hidden">Laporan Project</DialogTitle>
 
-        {/* HEADER */}
+        {/* MODAL HEADER */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/8 bg-white/[0.02]">
           <div className="flex items-center gap-3">
             <div className="w-2 h-2 rounded-full bg-red-500" />
@@ -280,19 +302,22 @@ export default function ReportModal({
           </div>
         </div>
 
-        {/* BODY */}
+        {/* MODAL BODY (Scrollable area) */}
         <div className="p-6 overflow-y-auto max-h-[65vh] space-y-6">
+          {/* Tampilan Loading */}
           {loading && (
             <div className="flex flex-col items-center py-16">
               <Loader2 className="animate-spin text-red-500 w-6 h-6" />
             </div>
           )}
 
+          {/* Tampilan Error */}
           {error && <p className="text-red-400">{error}</p>}
 
+          {/* Tampilan Utama Data Laporan */}
           {report && (
             <>
-              {/* PROJECT INFO */}
+              {/* Informasi Utama Project */}
               <div>
                 <h2 className="text-xl font-bold">{report.project.name}</h2>
 
@@ -309,7 +334,7 @@ export default function ReportModal({
                 </div>
               </div>
 
-              {/* PROGRESS */}
+              {/* Progress Bar & Counter Task */}
               <div className="bg-white/5 p-4 rounded-xl">
                 <div className="flex justify-between mb-2">
                   <span>Progress</span>
@@ -337,7 +362,7 @@ export default function ReportModal({
                 </div>
               </div>
 
-              {/* BREAKDOWN */}
+              {/* Breakdown Task Per Kolom Kanban */}
               <div>
                 <h3 className="mb-2 text-sm font-semibold">
                   Breakdown Kolom
@@ -362,7 +387,7 @@ export default function ReportModal({
                 </div>
               </div>
 
-              {/* TEAM */}
+              {/* Daftar Anggota Tim & Top Contributor */}
               <div>
                 <h3 className="mb-2 text-sm font-semibold">
                   Tim ({report.members.length})
@@ -373,7 +398,7 @@ export default function ReportModal({
                     const isTop =
                       report.top_member?.clerk_user_id === m.clerk_user_id;
 
-                    const name = resolveName(m.clerk_user_id);
+                    const name = resolveName(m.clerk_user_id); // Panggil mapper nama
 
                     return (
                       <div
@@ -407,7 +432,7 @@ export default function ReportModal({
           )}
         </div>
 
-        {/* FOOTER */}
+        {/* MODAL FOOTER */}
         <div className="flex justify-between items-center px-6 py-4 border-t border-white/8">
           <span className="text-xs text-slate-500">
             {report &&
